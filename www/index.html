@@ -356,8 +356,8 @@ function loadAvg(p,cb){
   avgCache[p.id]=null;const im=new Image();im.crossOrigin="anonymous";
   im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=24;const g=c.getContext("2d");g.drawImage(im,0,0,24,24);
     const d=g.getImageData(0,0,24,24).data;let r=0,gg=0,b=0;for(let i=0;i<d.length;i+=4){r+=d[i];gg+=d[i+1];b+=d[i+2]}const n=d.length/4;
-    avgCache[p.id]=[r/n,gg/n,b/n];delete texCache[p.id];}catch(e){}cb&&cb()};
-  im.onerror=()=>{cb&&cb()};im.src=imgUrl(p.img,120);
+    avgCache[p.id]=[r/n,gg/n,b/n];photoCache[p.id]=im;delete texCache[p.id];}catch(e){}cb&&cb()};
+  im.onerror=()=>{cb&&cb()};im.src=imgUrl(p.img,700);
 }
 
 // ---------- STATE ----------
@@ -379,9 +379,19 @@ function rnd(seed){let s=seed>>>0||1;return()=>((s=Math.imul(s^s>>>15,s|1)^(s+Ma
 const texCache={};
 // texture covers 8 ft x 8 ft at 64 px/ft
 const TFT=8, PPF=64, TS=TFT*PPF;
+const photoCache={};
+// how many feet one product photo covers on the floor
+const PHOTO_FT={lvp:3.5,laminate:3.5,wood:3.5,tile:4,carpet:2};
 function makeTex(p){
   if(texCache[p.id]) return texCache[p.id];
   const c=document.createElement("canvas");c.width=c.height=TS;const g=c.getContext("2d");
+  const ph=photoCache[p.id];
+  if(ph){ // real product photo, center-cropped and tiled with mirroring so seams don't show
+    const sq=Math.min(ph.naturalWidth,ph.naturalHeight)*0.9,sx=(ph.naturalWidth-sq)/2,sy=(ph.naturalHeight-sq)/2;
+    const t=Math.round((PHOTO_FT[p.cat]||3)*PPF);
+    for(let y=0,j=0;y<TS;y+=t,j++)for(let x=0,i=0;x<TS;x+=t,i++){g.save();g.translate(x+(i%2?t:0),y+(j%2?t:0));g.scale(i%2?-1:1,j%2?-1:1);g.drawImage(ph,sx,sy,sq,sq,0,0,t,t);g.restore()}
+    try{const img=g.getImageData(0,0,TS,TS);texCache[p.id]={canvas:c,data:img.data};return texCache[p.id]}catch(e){g.clearRect(0,0,TS,TS)}
+  }
   const r=rnd(p.id.length*7919+p.price*100);const [R,G,B]=avgCache[p.id]||p.tex.base;
   const img=g.createImageData(TS,TS);const d=img.data;
   if(p.tex.type==="plank"){
