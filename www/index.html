@@ -318,7 +318,7 @@ const REMOVAL = {
   woodtile:{label:"Wood or tile",rate:3.75,unit:"sf"}
 };
 const RATES = {quarter:1.95, baseboard:3.50, baseRemove:1.25, transition:35, furniture:125, staircase:450, toilet:135,
-  quarterMat:1.10, baseboardMat:2.25, baseReinstall:2.00, dumpFee:750, prepPatch:1.75, stairMat:650, minLabor:1500, tax:0.105};
+  quarterMat:1.10, baseboardMat:2.25, baseReinstall:2.00, dumpFee:750, dumpFullSf:1500, prepPatch:1.75, stairMat:650, minLabor:1500, tax:0.105};
 // Possible extra costs: shown on the quote, not added. Confirmed from the homeowner's photos.
 const EXTRAS = [
   ["Underlayment pad (some LVP and laminate)","$0.50 / sq ft"],
@@ -532,13 +532,13 @@ $("addRoom").onclick=()=>{S.rooms.push({name:"Room "+(S.rooms.length+1),lf:0,li:
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
-  let hardPerim=0,totalSf=0,anyRemoval=false;
+  let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0;
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
     const m=a*(1+p.waste)*p.price;const l=lr.unit==="sy"?a/9*lr.rate:a*lr.rate;
     add(`${r.name}: ${p.name}`,p.service?`${a.toFixed(0)} sq ft, stain, sealer and finish included`:`${a.toFixed(0)} sq ft, includes ${Math.round(p.waste*100)}% extra for cuts`,m,l);
     const ex=REMOVAL[r.existing];
-    if(ex.rate>0&&p.cat!=="refinish"){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()}`,r.name,0,rl);anyRemoval=true}
+    if(ex.rate>0&&p.cat!=="refinish"){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()}`,r.name,0,rl);anyRemoval=true;removedSf+=a}
     if(r.doors>0&&p.cat!=="refinish") add("Transition strips",`${r.name}, ${r.doors} doorway${r.doors>1?"s":""}`,0,r.doors*RATES.transition);
     if(p.cat!=="carpet"&&p.cat!=="refinish") hardPerim+=roomPerim(r);
   });
@@ -547,7 +547,7 @@ function calc(){
     else if(S.trim==="reinstall") add("Remove and reinstall your baseboards",`${hardPerim.toFixed(0)} ft of wall`,0,hardPerim*RATES.baseReinstall);
     else add("New baseboards (remove old, install new)",`${hardPerim.toFixed(0)} ft of wall, baseboard included`,hardPerim*1.1*RATES.baseboardMat,hardPerim*(RATES.baseboard+RATES.baseRemove));
   }
-  if(anyRemoval) add("Dump fee","Minimum $750. We haul away the old floor and all job trash",0,RATES.dumpFee);
+  if(anyRemoval){const share=Math.min(1,removedSf/RATES.dumpFullSf);add("Dump fee",`We haul away the old floor and all job trash (whole house $750, ${removedSf.toFixed(0)} sq ft here)`,0,Math.max(100,Math.round(RATES.dumpFee*share/25)*25))}
   const hardSf=S.rooms.reduce((t,r)=>t+(roomArea(r)>0&&P(r.floor).cat!=="carpet"?roomArea(r):0),0);
   if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots","Estimate, we confirm from your photos",0,(hardSf||totalSf)*RATES.prepPatch);
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
