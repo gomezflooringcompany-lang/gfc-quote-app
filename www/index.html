@@ -120,7 +120,14 @@ nav.tabs button{font:inherit;font-size:12px;font-weight:600;background:none;bord
 nav.tabs button .n{width:26px;height:26px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-family:var(--display);font-size:15px}
 nav.tabs button[aria-current="page"]{color:var(--accent)}
 nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:9}
+.donebar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.donebar .btn{display:block;width:100%;max-width:728px;margin:0 auto;font-size:17px;padding:14px}
+.donebar .btn[disabled]{opacity:.55}
+main.withdone{padding-bottom:180px}
+nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
+.upd{display:grid;gap:10px}.upd .row{gap:8px}.upd .btn{flex:1;min-width:120px}
+.flash{animation:fl 1.2s ease}@keyframes fl{0%{box-shadow:0 0 0 3px #1F7A4D}100%{box-shadow:0 0 0 0 transparent}}
+.toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:9}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
 .photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
 .zelle{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface)}
@@ -241,7 +248,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
       <span class="note" id="gErr" style="color:#B42318" hidden>Please enter your name and a valid email.</span>
       <button class="btn primary" type="submit">Show my quote</button>
     </form>
-    <div class="panel" style="display:grid;gap:12px">
+    <div class="panel" id="extrasPanel" style="display:grid;gap:12px">
       <b>Extras</b>
       <div class="two">
         <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
@@ -253,6 +260,11 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
       </div>
     </div>
     <div class="total"><span class="rng">Estimated total, material, installation and tax</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
+    <div class="panel upd" id="updPanel">
+      <b>Update my quote</b>
+      <span class="note">Change anything and your price updates right away.</span>
+      <div class="row"><button class="btn small" type="button" data-upd="floors">Change floor or color</button><button class="btn small" type="button" data-upd="measure">Change rooms or sizes</button><button class="btn small" type="button" data-upd="extras">Change extras</button></div>
+    </div>
     <div class="panel"><table class="q" id="qTable"></table></div>
     <div class="panel howto" id="howPanel" style="display:grid;gap:6px"></div>
     <div class="panel" style="display:grid;gap:8px">
@@ -312,6 +324,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
   <button data-v="viz"><span class="n">3</span>See it</button>
   <button data-v="quote"><span class="n">4</span>Quote</button>
 </nav>
+<div class="donebar" id="doneBar" hidden><button class="btn primary" id="doneBtn" type="button"></button></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -488,7 +501,7 @@ function renderCatalog(){
     b.textContent=S.chosen===p.id?"Chosen":"Use this floor";
     b.onclick=()=>{track("use",p.id);S.chosen=p.id;S.picked=(S.picked||[]).filter(i=>i!==p.id);S.picked.unshift(p.id);S.picked=S.picked.slice(0,8);
       S.rooms.forEach(r=>r.floor=p.id);
-      save();renderCatalog();go("measure");toast("Great choice! Now measure your rooms.")};
+      S.done=S.done||{};S.done.floors=1;save();renderCatalog();go("measure");toast("Step 1 done ✓ Now measure your rooms.")};
     if(p.service){b.textContent=S.chosen===p.id?"Chosen":"Choose refinishing";c.append(b)}else{c.append(sb);c.append(b)}el.append(c)});
   $("more").hidden=list.length<=shown;
 }
@@ -615,7 +628,7 @@ $("sampleBtn").onclick=()=>{
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
-["trim","prep","furn","steps","stairType","toilets"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote()}));
+["trim","prep","furn","steps","stairType","toilets"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
 const DB={url:"",key:"",company:"gfc"};
 const dbOn=()=>!!(DB.url&&DB.key);
@@ -789,8 +802,18 @@ function go(v){S.view=v;save();
   if(v==="measure")renderRooms();
   if(v==="viz"){renderVizControls();if(!basePixels)sampleRoom();else renderViz()}
   if(v==="quote"){gateUI();renderQuote();refUI()}
-  window.scrollTo(0,0);
+  doneUI();window.scrollTo(0,0);
 }
+const STEPS=["floors","measure","viz","quote"],NEXTLBL={floors:"Done ✓  Next: measure your rooms ›",measure:"Done ✓  Next: see it in your room ›",viz:"Done ✓  Next: show my quote ›"};
+function doneUI(){const v=S.view,bar=$("doneBar"),b=$("doneBtn");S.done=S.done||{};
+  bar.hidden=!NEXTLBL[v];document.querySelector("main").classList.toggle("withdone",!!NEXTLBL[v]);
+  if(NEXTLBL[v]){const ok=v!=="floors"||!!S.chosen;b.disabled=!ok;b.textContent=ok?NEXTLBL[v]:"Pick a floor above to continue"}
+  document.querySelectorAll("nav.tabs button").forEach((t,i)=>{const d=S.done[t.dataset.v]&&t.dataset.v!==v;t.classList.toggle("isdone",!!d);t.querySelector(".n").textContent=d?"✓":String(i+1)})}
+$("doneBtn").onclick=()=>{const v=S.view,i=STEPS.indexOf(v);if(i<0||i>2)return;S.done=S.done||{};S.done[v]=1;save();track("done",v);go(STEPS[i+1]);toast("Step "+(i+1)+" done ✓")};
+document.querySelectorAll("[data-upd]").forEach(b=>b.onclick=()=>{const t=b.dataset.upd;track("update",t);
+  if(t==="extras"){const e=$("extrasPanel");e.scrollIntoView({behavior:"smooth",block:"start"});e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")}
+  else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Done":"Change your rooms, then tap Done")}});
+function flashTotal(){const t=document.querySelector(".total");if(!t)return;t.classList.remove("flash");void t.offsetWidth;t.classList.add("flash");toast("Quote updated")}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 let srchT;$("search").addEventListener("input",()=>{shown=24;renderCatalog();clearTimeout(srchT);srchT=setTimeout(()=>{const v=$("search").value.trim();if(v.length>2)track("search",v)},1500)});
 $("sort").addEventListener("change",()=>{shown=24;renderCatalog()});
