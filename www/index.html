@@ -318,7 +318,7 @@ const REMOVAL = {
   woodtile:{label:"Wood or tile",rate:3.75,unit:"sf"}
 };
 const RATES = {quarter:1.95, baseboard:3.50, baseRemove:1.25, transition:35, furniture:125, staircase:450, toilet:135,
-  quarterMat:1.10, baseboardMat:2.25, baseReinstall:2.00, dumpFee:250, prepPatch:1.75, stairMat:650, minLabor:1500, tax:0.105};
+  quarterMat:1.10, baseboardMat:2.25, baseReinstall:2.00, dumpFee:750, prepPatch:1.75, stairMat:650, minLabor:1500, tax:0.105};
 // Possible extra costs: shown on the quote, not added. Confirmed from the homeowner's photos.
 const EXTRAS = [
   ["Underlayment pad (some LVP and laminate)","$0.50 / sq ft"],
@@ -547,7 +547,7 @@ function calc(){
     else if(S.trim==="reinstall") add("Remove and reinstall your baseboards",`${hardPerim.toFixed(0)} ft of wall`,0,hardPerim*RATES.baseReinstall);
     else add("New baseboards (remove old, install new)",`${hardPerim.toFixed(0)} ft of wall, baseboard included`,hardPerim*1.1*RATES.baseboardMat,hardPerim*(RATES.baseboard+RATES.baseRemove));
   }
-  if(anyRemoval) add("Dump fee","We haul away the old floor and all job trash",0,RATES.dumpFee);
+  if(anyRemoval) add("Dump fee","Minimum $750. We haul away the old floor and all job trash",0,RATES.dumpFee);
   const hardSf=S.rooms.reduce((t,r)=>t+(roomArea(r)>0&&P(r.floor).cat!=="carpet"?roomArea(r):0),0);
   if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots","Estimate, we confirm from your photos",0,(hardSf||totalSf)*RATES.prepPatch);
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
