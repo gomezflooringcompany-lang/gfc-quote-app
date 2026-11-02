@@ -1,8 +1,7 @@
 name: Web test version (iPhone)
+# Runs only when started by hand until GitHub Pages is switched on
+# (Settings > Pages > Source: GitHub Actions). Then add the push trigger back.
 on:
-  push:
-    branches: [main]
-    paths: [www/**, .github/workflows/web-preview.yml]
   workflow_dispatch:
 permissions:
   contents: read
