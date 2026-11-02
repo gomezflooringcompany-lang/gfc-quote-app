@@ -1,4 +1,4 @@
-# GFC Floor Quote (iPhone + Android)
+# GFC Instant Quote (iPhone + Android)
 
 Gomez Flooring Company homeowner app. The app itself is `www/index.html`; Capacitor wraps it for iPhone (`ios/`) and Android (`android/`).
 

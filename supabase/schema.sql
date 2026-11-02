@@ -1,4 +1,4 @@
--- GFC Floor Quote: online database (Supabase / Postgres)
+-- GFC Instant Quote: online database (Supabase / Postgres)
 -- The app may only INSERT (anon key). Only Luis (dashboard / service role) can read.
 -- company_id is here so the app can serve other contractors later (phase "license").
 

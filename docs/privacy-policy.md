@@ -1,4 +1,4 @@
-# Privacy Policy: GFC Floor Quote
+# Privacy Policy: GFC Instant Quote
 
 Gomez Flooring Company, 13421 Hubbard St Unit 126, Sylmar, CA 91342 · (818) 203-1168 · gomezflooringcompany@gmail.com
 

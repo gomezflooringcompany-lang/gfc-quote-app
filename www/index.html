@@ -3,10 +3,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F1F3D">
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png"><link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-title" content="GFC Quote"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GFC Instant Quote"><meta name="apple-mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
-<title>GFC Floor Quote</title>
+<title>GFC Instant Quote</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -38,6 +38,7 @@ h1,h2,h3{font-family:var(--display);letter-spacing:.01em;text-wrap:balance;margi
 .topbar .test{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.5);border-radius:4px;padding:2px 6px}
 main{max-width:760px;margin:0 auto;padding-block:16px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .view{display:grid;gap:16px}
+.back{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:16px;padding:6px 0;margin:0 0 6px;cursor:pointer;display:block}
 .step{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700}
 .lead{color:var(--muted);margin:4px 0 0}
 h2{font-size:30px}
@@ -162,7 +163,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
 
   <!-- 2 MEASURE -->
   <section class="view" id="v-measure" hidden>
-    <div><div class="step">Step 2 of 4</div><h2>Measure your rooms</h2>
+    <div><button class="back" type="button" data-go="floors">‹ Back</button><div class="step">Step 2 of 4</div><h2>Measure your rooms</h2>
       <p class="lead">Enter each room wall to wall. Not sure how? Open the tape measure guide below.</p></div>
     <details class="tut" id="tut">
       <summary>How to measure with a tape measure (2 minutes)</summary>
@@ -194,7 +195,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
 
   <!-- 3 VISUALIZE -->
   <section class="view" id="v-viz" hidden>
-    <div><div class="step">Step 3 of 4</div><h2>See it in your room</h2>
+    <div><button class="back" type="button" data-go="measure">‹ Back</button><div class="step">Step 3 of 4</div><h2>See it in your room</h2>
       <p class="lead">Take or upload a photo of your room. Drag the 4 dots to the corners of the floor, then tap a floor to try it.</p></div>
     <div class="row">
       <label class="btn primary small" for="photoIn" style="display:inline-block;color:var(--accent-ink)">Take or upload a photo</label>
@@ -215,7 +216,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
 
   <!-- 4 QUOTE -->
   <section class="view" id="v-quote" hidden>
-    <div class="keep"><div class="step">Step 4 of 4</div><h2>Your instant quote</h2>
+    <div class="keep"><button class="back" type="button" data-go="viz">‹ Back</button><div class="step">Step 4 of 4</div><h2>Your instant quote</h2>
       <p class="lead">Based on your measurements. We confirm the final price with your photos or a quick video call, so no surprises.</p></div>
     <form class="panel keep" id="gate" style="display:grid;gap:12px" novalidate>
       <b style="font-size:20px">Where should we send your quote?</b>
@@ -235,7 +236,8 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
     <div class="panel" style="display:grid;gap:12px">
       <b>Extras</b>
       <div class="two">
-        <label>Trim along the walls<select id="trim"><option value="quarter">Quarter round (new)</option><option value="baseboard">New baseboard</option><option value="none">Keep what I have</option></select></label>
+        <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
+        <label>Floor underneath<select id="prep"><option value="ok">Flat and in good shape</option><option value="fix">Has cracks, bumps or low spots</option><option value="unsure">Not sure</option></select></label>
         <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please</option><option value="no">No, rooms will be empty</option></select></label>
         <label>Staircases to cover<input id="stairs" type="number" min="0" max="5" value="0" inputmode="numeric"></label>
         <label>Toilets to pull and reset<input id="toilets" type="number" min="0" max="6" value="0" inputmode="numeric"></label>
@@ -247,6 +249,17 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
       <b>Possible extra costs</b>
       <span class="note">Only if your floor needs it. We check your photos and tell you before any work starts.</span>
       <table class="q" id="qExtras"></table>
+    </div>
+    <div class="panel" id="refPanel" hidden style="display:grid;gap:10px">
+      <b>About your wood floor (refinishing)</b>
+      <span class="note">Send us a close-up photo of your floor and we'll tell you the wood species (oak, maple, hickory and so on). It helps us pick the right sanding and stain.</span>
+      <label>Do you know your wood?<select id="species"><option value="">Not sure, please tell me</option><option>Red oak</option><option>White oak</option><option>Maple</option><option>Hickory</option><option>Walnut</option><option>Brazilian cherry</option><option>Bamboo / engineered</option></select></label>
+      <label>How wide are your boards?<select id="plank"><option value="">Not sure (we'll check your photo)</option><option>Strip, about 2 1/4 in</option><option>About 3 in</option><option>About 4 in</option><option>5 in or wider</option></select></label>
+      <span class="note">Tip: lay a tape measure across one board in your photo and we can read the exact width.</span>
+      <label>Any dark stains (pet urine, water, plant pots)?<select id="stains"><option value="no">No</option><option value="yes">Yes</option></select></label>
+      <span class="note" id="stainNote" hidden style="color:#8A4B00"><b>Photos required.</b> Deep stains like pet urine or water soak down into the wood grain, so sanding can't remove them. The only fix is to take out those boards and lace in new ones, which we price separately. Please add a photo of each stain so we can quote it.</span>
+      <label class="btn small" style="justify-self:start;cursor:pointer">📷 Add photos of the floor and any stains<input id="refIn" type="file" accept="image/*" multiple hidden></label>
+      <span class="note" id="refList">No photos yet. Tip: one close-up from about 1 foot away, and one of each stain.</span>
     </div>
     <div class="panel" style="display:grid;gap:12px">
       <b>Lock in your quote</b>
@@ -266,7 +279,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
       <div id="sent" hidden style="display:grid;gap:8px">
         <span class="note" id="sentMsg">Test version: requests are not sent automatically yet. Copy this and text it to <b>(818) 203-1168</b>.</span>
         <textarea class="copybox" id="summary" readonly></textarea>
-        <div class="row"><button class="btn small" id="vidShare" hidden>Send my videos</button><button class="btn small" id="copyBtn">Copy quote</button><a class="btn small" href="sms:+18182031168" id="smsLink">Text Gomez Flooring</a></div>
+        <div class="row"><button class="btn small" id="vidShare" hidden>Send my videos and photos</button><button class="btn small" id="copyBtn">Copy quote</button><a class="btn small" href="sms:+18182031168" id="smsLink">Text Gomez Flooring</a></div>
       </div>
     </div>
     <div class="panel" style="display:grid;gap:10px">
@@ -295,7 +308,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
 // ---------- PRICE DATA (labor from GFC price sheet; material = sample sell prices) ----------
 const LABOR = {
   lvp_click:{rate:3.25,unit:"sf"}, laminate:{rate:3.25,unit:"sf"}, engineered_wood:{rate:5.50,unit:"sf"}, hardwood_nail:{rate:5.50,unit:"sf"},
-  carpet_stretch:{rate:1.40,unit:"sf"}, tile:{rate:8.50,unit:"sf"}, lvt_gluedown:{rate:3.50,unit:"sf"}
+  carpet_stretch:{rate:1.40,unit:"sf"}, refinish:{rate:6.00,unit:"sf"}, tile:{rate:8.50,unit:"sf"}, lvt_gluedown:{rate:3.50,unit:"sf"}
 };
 const REMOVAL = {
   none:{label:"Nothing / bare concrete",rate:0,unit:"sf"},
@@ -305,7 +318,7 @@ const REMOVAL = {
   woodtile:{label:"Wood or tile",rate:3.75,unit:"sf"}
 };
 const RATES = {quarter:1.95, baseboard:3.50, baseRemove:1.25, transition:35, furniture:125, staircase:450, toilet:135,
-  quarterMat:1.10, baseboardMat:2.25, stairMat:650, minLabor:1500, tax:0.105};
+  quarterMat:1.10, baseboardMat:2.25, baseReinstall:2.00, dumpFee:250, prepPatch:1.75, stairMat:650, minLabor:1500, tax:0.105};
 // Possible extra costs: shown on the quote, not added. Confirmed from the homeowner's photos.
 const EXTRAS = [
   ["Underlayment pad (some LVP and laminate)","$0.50 / sq ft"],
@@ -316,7 +329,7 @@ const EXTRAS = [
   ["Concrete grinding (high spots, old glue)","$4.40 / sq ft"],
   ["Moisture barrier","$3.50 / sq ft"]
 ];
-const CATS = [["lvp","Waterproof vinyl"],["laminate","Laminate"],["wood","Wood"],["carpet","Carpet"],["tile","Tile"]];
+const CATS = [["lvp","Waterproof vinyl"],["laminate","Laminate"],["wood","Wood"],["carpet","Carpet"],["tile","Tile"],["refinish","Refinish my wood floors"]];
 // Real catalog: residential floors from gomezflooringcompany.store (Shopify), loaded from catalog.json.
 // Sample floors below are only a fallback if the catalog can't load.
 const IMGBASE="https://cdn.shopify.com/s/files/1/0702/1294/3919/files/";
@@ -337,7 +350,9 @@ function fromCatalog(id){
   const p={id,h,cat:x.c,kind:info.kind,name:x.t,color:titleCase(k[0]),vendor:x.v,spec:x.s,price:x.p,labor:info.labor,waste:info.waste,tex,img:k[1]||x.img,cardImg:x.img,colors:x.k};
   PCACHE[id]=p;return p;
 }
-const SAMPLE = [
+const REFINISH={id:"refinish",cat:"refinish",kind:"Sand and refinish (your existing hardwood)",name:"Sand and refinish my wood floors",color:"Stain color of your choice",service:true,
+  spec:"Sand to bare wood, stain color of your choice, sealer and 2 coats of Bona Traffic HD finish. Supplies included.",price:0,labor:"refinish",waste:0,tex:{type:"plank",base:[150,98,58],w:5}};
+const SAMPLE = [REFINISH,
   {id:"revwood",cat:"laminate",kind:"Laminate",name:"Mohawk RevWood Premier",color:"Natural oak",price:3.79,labor:"laminate",waste:.10,tex:{type:"plank",base:[186,146,104],w:7.5}},
   {id:"lvp20",cat:"lvp",kind:"Waterproof vinyl plank",name:"Coastal Oak 20 mil",color:"Driftwood gray",price:3.49,labor:"lvp_click",waste:.10,tex:{type:"plank",base:[160,152,140],w:7}},
   {id:"lvp12",cat:"lvp",kind:"Waterproof vinyl plank",name:"Everyday Oak 12 mil",color:"Honey",price:2.79,labor:"lvp_click",waste:.10,tex:{type:"plank",base:[196,150,96],w:6}},
@@ -426,6 +441,7 @@ function renderCats(){$("cats").innerHTML="";CATS.forEach(([k,l])=>{const b=docu
 let shown=24;
 function catalogList(){
   const q=($("search").value||"").toLowerCase().trim();const sort=$("sort").value;
+  if(S.cat==="refinish") return [{sample:REFINISH}];
   let list=CATALOG.length?CATALOG.filter(x=>x.c===S.cat):SAMPLE.filter(p=>p.cat===S.cat).map(p=>({sample:p}));
   if(q) list=list.filter(x=>x.sample?(x.sample.name+" "+x.sample.color).toLowerCase().includes(q):(x.t+" "+x.v+" "+x.k.map(k=>k[0]).join(" ")).toLowerCase().includes(q));
   if(sort==="low") list=list.slice().sort((a,b)=>(a.p||a.sample?.price||0)-(b.p||b.sample?.price||0));
@@ -435,7 +451,8 @@ function catalogList(){
 function renderCatalog(){
   const el=$("catalog");el.innerHTML="";
   const list=catalogList();
-  $("count").textContent=list.length+" floors"+(CATALOG.length?"":" (sample list)");
+  $("count").textContent=S.cat==="refinish"?"Bring your existing hardwood back to like new":list.length+" floors"+(CATALOG.length?"":" (sample list)");
+  $("search").parentElement&&($("search").style.display=$("sort").style.display=S.cat==="refinish"?"none":"");
   list.slice(0,shown).forEach(x=>{
     S.colorOf=S.colorOf||{};
     const id=x.sample?x.sample.id:x.h+"~"+(S.colorOf[x.h]||0);const p=P(id);
@@ -449,7 +466,7 @@ function renderCatalog(){
     const colorSel=p.colors&&p.colors.length>1?`<label class="csel">Color<select data-h="${p.h}">${p.colors.map((k,i)=>`<option value="${i}"${i===(S.colorOf[p.h]||0)?" selected":""}>${titleCase(k[0])}</option>`).join("")}</select></label>`:`<span class="meta">${esc(p.color)}</span>`;
     c.insertAdjacentHTML("beforeend",`<div class="body"><span class="kind">${p.vendor?esc(p.vendor)+" · ":""}${p.kind}</span><span class="title">${esc(p.name)}</span>
       ${p.spec?`<span class="meta">${esc(p.spec)}</span>`:""}${colorSel}
-      <span class="price">Material ${money2(p.price)}<small> /sq ft</small></span><span class="price">Installation ${money2(inst)}<small> /sq ft</small></span></div>`);
+      ${p.service?`<span class="price">Sand and refinish ${money2(inst)}<small> /sq ft</small></span>`:`<span class="price">Material ${money2(p.price)}<small> /sq ft</small></span><span class="price">Installation ${money2(inst)}<small> /sq ft</small></span>`}</div>`);
     const cs=c.querySelector("select[data-h]");if(cs)cs.onchange=()=>{S.colorOf[p.h]=+cs.value;track("color",p.h+"~"+cs.value);save();renderCatalog()};
     const sb=document.createElement("button");const has=(S.samples||[]).includes(p.id);sb.className="btn small";sb.style.margin="0 12px 8px";
     sb.textContent=has?"✓ Sample added":"+ Add sample";sb.setAttribute("aria-pressed",has);
@@ -457,9 +474,9 @@ function renderCatalog(){
     const b=document.createElement("button");b.className="btn small "+(S.chosen===p.id?"primary":"");b.style.margin="0 12px 12px";
     b.textContent=S.chosen===p.id?"Chosen":"Use this floor";
     b.onclick=()=>{track("use",p.id);S.chosen=p.id;S.picked=(S.picked||[]).filter(i=>i!==p.id);S.picked.unshift(p.id);S.picked=S.picked.slice(0,8);
-      if(S.example){S.rooms.forEach(r=>{if(P(r.floor).cat===p.cat)r.floor=p.id})}else if(S.rooms.length===1)S.rooms[0].floor=p.id;
-      save();renderCatalog();toast(p.name+" chosen. Pick it for each room in step 2.")};
-    c.append(sb);c.append(b);el.append(c)});
+      S.rooms.forEach(r=>r.floor=p.id);
+      save();renderCatalog();go("measure");toast("Great choice! Now measure your rooms.")};
+    if(p.service){b.textContent=S.chosen===p.id?"Chosen":"Choose refinishing";c.append(b)}else{c.append(sb);c.append(b)}el.append(c)});
   $("more").hidden=list.length<=shown;
 }
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -515,20 +532,24 @@ $("addRoom").onclick=()=>{S.rooms.push({name:"Room "+(S.rooms.length+1),lf:0,li:
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
-  let hardPerim=0,totalSf=0;
+  let hardPerim=0,totalSf=0,anyRemoval=false;
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
     const m=a*(1+p.waste)*p.price;const l=lr.unit==="sy"?a/9*lr.rate:a*lr.rate;
-    add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft, includes ${Math.round(p.waste*100)}% extra for cuts`,m,l);
+    add(`${r.name}: ${p.name}`,p.service?`${a.toFixed(0)} sq ft, stain, sealer and finish included`:`${a.toFixed(0)} sq ft, includes ${Math.round(p.waste*100)}% extra for cuts`,m,l);
     const ex=REMOVAL[r.existing];
-    if(ex.rate>0){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()} and haul away`,r.name,0,rl)}
-    if(r.doors>0) add("Transition strips",`${r.name}, ${r.doors} doorway${r.doors>1?"s":""}`,0,r.doors*RATES.transition);
-    if(p.cat!=="carpet") hardPerim+=roomPerim(r);
+    if(ex.rate>0&&p.cat!=="refinish"){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()}`,r.name,0,rl);anyRemoval=true}
+    if(r.doors>0&&p.cat!=="refinish") add("Transition strips",`${r.name}, ${r.doors} doorway${r.doors>1?"s":""}`,0,r.doors*RATES.transition);
+    if(p.cat!=="carpet"&&p.cat!=="refinish") hardPerim+=roomPerim(r);
   });
   if(S.trim!=="none"&&hardPerim>0){
     if(S.trim==="quarter") add("New quarter round",`${hardPerim.toFixed(0)} ft of wall`,hardPerim*1.1*RATES.quarterMat,hardPerim*RATES.quarter);
-    else add("New baseboard (remove old)",`${hardPerim.toFixed(0)} ft of wall`,hardPerim*1.1*RATES.baseboardMat,hardPerim*(RATES.baseboard+RATES.baseRemove));
+    else if(S.trim==="reinstall") add("Remove and reinstall your baseboards",`${hardPerim.toFixed(0)} ft of wall`,0,hardPerim*RATES.baseReinstall);
+    else add("New baseboards (remove old, install new)",`${hardPerim.toFixed(0)} ft of wall, baseboard included`,hardPerim*1.1*RATES.baseboardMat,hardPerim*(RATES.baseboard+RATES.baseRemove));
   }
+  if(anyRemoval) add("Dump fee","We haul away the old floor and all job trash",0,RATES.dumpFee);
+  const hardSf=S.rooms.reduce((t,r)=>t+(roomArea(r)>0&&P(r.floor).cat!=="carpet"?roomArea(r):0),0);
+  if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots","Estimate, we confirm from your photos",0,(hardSf||totalSf)*RATES.prepPatch);
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
   if(S.stairs>0) add(`Staircase${S.stairs>1?"s":""} (${S.stairs})`,"Material allowance, confirmed at visit",S.stairs*RATES.stairMat,S.stairs*RATES.staircase);
   if(S.toilets>0) add("Pull and reset toilet",`${S.toilets}`,0,S.toilets*RATES.toilet);
@@ -539,7 +560,7 @@ function calc(){
 }
 const r50=n=>Math.round(n/50)*50;
 function renderQuote(){
-  $("trim").value=S.trim;$("furn").value=S.furn;$("stairs").value=S.stairs;$("toilets").value=S.toilets;
+  $("trim").value=S.trim;$("prep").value=S.prep||"ok";$("furn").value=S.furn;$("stairs").value=S.stairs;$("toilets").value=S.toilets;
   const q=calc();
   $("qTotal").textContent=money(q.total);
   $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft`:"Add your rooms in step 2";
@@ -561,7 +582,7 @@ $("sampleBtn").onclick=()=>{
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
-["trim","furn","stairs","toilets"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote()}));
+["trim","prep","furn","stairs","toilets"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
 const DB={url:"",key:"",company:"gfc"};
 const dbOn=()=>!!(DB.url&&DB.key);
@@ -592,18 +613,25 @@ $("gate").addEventListener("submit",e=>{e.preventDefault();
 document.querySelectorAll(".privlink").forEach(a=>{a.href=PRIVACY_URL;a.target="_blank";a.rel="noopener"});
 $("delMe").onclick=e=>{e.preventDefault();if(!confirm("Delete your name, email, phone and browsing history from this app? To also delete what you already sent us, call (818) 203-1168 or email gomezflooringcompany@gmail.com."))return;
   delete S.contact;S.activity=[];save();["gName","gEmail","gPhone","gZip","cName","cPhone"].forEach(id=>$(id).value="");$("gMail").checked=$("gText").checked=false;gateUI();toast("Your info was deleted from this app")};
-// ---------- VIDEO WALKTHROUGH ----------
-const videos=[];
+// ---------- VIDEO WALKTHROUGH + REFINISH PHOTOS ----------
+const videos=[];const refPhotos=[];
+function refUI(){const on=S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="refinish");$("refPanel").hidden=!on;$("stainNote").hidden=$("stains").value!=="yes";
+  $("refList").textContent=refPhotos.length?`✓ ${refPhotos.length} photo${refPhotos.length>1?"s":""} ready. We'll ask you to send them with your request.`:"No photos yet. Tip: one close-up from about 1 foot away, and one of each stain.";
+  $("vidShare").hidden=!(videos.length+refPhotos.length)}
+$("refIn").addEventListener("change",e=>{for(const f of e.target.files)refPhotos.push(f);e.target.value="";track("refphoto",refPhotos.length);refUI()});
+$("stains").addEventListener("change",()=>{S.stains=$("stains").value;save();refUI()});
+$("species").addEventListener("change",()=>{S.species=$("species").value;save()});
 $("vidIn").addEventListener("change",e=>{for(const f of e.target.files){videos.push(f);track("video",Math.round(f.size/1e6)+"MB")}e.target.value="";
   $("vidList").textContent=videos.length?`✓ ${videos.length} video${videos.length>1?"s":""} ready (${(videos.reduce((a,f)=>a+f.size,0)/1e6).toFixed(0)} MB). We'll ask you to send them when you request your quote.`:"No video yet (optional).";
-  $("vidShare").hidden=!videos.length});
-$("vidShare").onclick=async()=>{const data={files:videos,title:"Room video for Gomez Flooring",text:"Room walkthrough for my quote, "+((S.contact&&S.contact.name)||"")};
-  try{if(navigator.canShare&&navigator.canShare({files:videos})){await navigator.share(data);toast("Thanks! Pick Messages and send to (818) 203-1168")}
+  refUI()});
+$("vidShare").onclick=async()=>{const all=[...videos,...refPhotos];const data={files:all,title:"Room video for Gomez Flooring",text:"Room walkthrough for my quote, "+((S.contact&&S.contact.name)||"")};
+  try{if(navigator.canShare&&navigator.canShare({files:all})){await navigator.share(data);toast("Thanks! Pick Messages and send to (818) 203-1168")}
   else toast("Text your video to (818) 203-1168 from your Photos app")}catch(e){}};
 $("sendBtn").onclick=()=>{
+  if(!$("refPanel").hidden&&$("stains").value==="yes"&&!refPhotos.length){toast("Please add a photo of each stain first");$("refPanel").scrollIntoView({behavior:"smooth"});return}
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
-  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, furniture: ${S.furn}, stairs: ${S.stairs}, toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}\n\n${interests()}`;
+  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, furniture: ${S.furn}, stairs: ${S.stairs}, toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
   $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
@@ -611,6 +639,7 @@ async function sendOnline(q){const id=uid(),c=S.contact||{};const btn=$("sendBtn
   $("sentMsg").textContent="Sending your request...";
   try{const paths=[];for(let i=0;i<videos.length;i++){$("sentMsg").textContent=`Uploading video ${i+1} of ${videos.length}... keep the app open.`;
       const ext=(videos[i].name.split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"");paths.push(await dbUpload(`${id}/video-${i+1}.${ext}`,videos[i]))}
+    for(let i=0;i<refPhotos.length;i++){$("sentMsg").textContent=`Uploading photo ${i+1} of ${refPhotos.length}...`;paths.push(await dbUpload(`${id}/floor-${i+1}.jpg`,refPhotos[i]))}
     await dbInsert("quote_requests",{id,name:$("cName").value||c.name,email:c.email,phone:$("cPhone").value||c.phone,zip:c.zip,city:$("cCity").value,best_time:$("cTime").value,
       quote_total:Math.round(q.total),rooms:S.rooms.filter(r=>roomArea(r)>0).map(r=>({name:r.name,sf:Math.round(roomArea(r)),floor:P(r.floor).name+" "+P(r.floor).color,cat:P(r.floor).cat,existing:r.existing,doors:r.doors})),
       extras:{trim:S.trim,furn:S.furn,stairs:S.stairs,toilets:S.toilets},summary:$("summary").value,interests:interests(),video_paths:paths});
@@ -719,13 +748,14 @@ function renderVizControls(){
 $("vizRoom").addEventListener("change",()=>{S.vizRoom=+$("vizRoom").value;save();renderViz()});
 
 // ---------- NAV ----------
+document.querySelectorAll("button.back").forEach(b=>b.onclick=()=>go(b.dataset.go));
 function go(v){S.view=v;save();
   ["floors","measure","viz","quote"].forEach(k=>{$("v-"+k).hidden=k!==v});
   document.querySelectorAll("nav.tabs button").forEach(b=>{if(b.dataset.v===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   if(v==="floors"){renderCats();renderCatalog();renderSamples()}
   if(v==="measure")renderRooms();
   if(v==="viz"){renderVizControls();if(!basePixels)sampleRoom();else renderViz()}
-  if(v==="quote"){gateUI();renderQuote()}
+  if(v==="quote"){gateUI();renderQuote();refUI()}
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>go(b.dataset.v));
@@ -737,9 +767,9 @@ function boot(){
   if(CATALOG.length){
     // replace sample floors from older saved data with real ones
     const first=c=>{const x=CATALOG.find(y=>y.c===c&&y.p>=2&&y.p<=6)||CATALOG.find(y=>y.c===c);return x?x.h+"~0":null};
-    const fix=id=>{if(fromCatalog(id))return id;const sp=SAMPLE.find(p=>p.id===id);return first(sp?sp.cat:"lvp")};
+    const fix=id=>{if(id==="refinish"||fromCatalog(id))return id;const sp=SAMPLE.find(p=>p.id===id);return first(sp?sp.cat:"lvp")};
     S.rooms.forEach(r=>r.floor=fix(r.floor));S.chosen=fix(S.chosen);
-    S.picked=(S.picked||[]).filter(id=>fromCatalog(id));S.samples=(S.samples||[]).filter(id=>fromCatalog(id));
+    S.picked=(S.picked||[]).filter(id=>id==="refinish"||fromCatalog(id));S.samples=(S.samples||[]).filter(id=>fromCatalog(id));
     if(S.example&&S.rooms[1]&&P(S.rooms[1].floor).cat!=="carpet")S.rooms[1].floor=first("carpet");
     save();
   }

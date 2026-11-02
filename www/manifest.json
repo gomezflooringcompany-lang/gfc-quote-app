@@ -1,6 +1,6 @@
 {
- "name": "Gomez Flooring Quote",
- "short_name": "GFC Quote",
+ "name": "GFC Instant Quote",
+ "short_name": "GFC Instant Quote",
  "start_url": ".",
  "display": "standalone",
  "background_color": "#F3F5F9",

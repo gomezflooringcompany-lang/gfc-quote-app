@@ -1,6 +1,6 @@
 # Store listing (draft)
 
-**App name:** GFC Floor Quote
+**App name:** GFC Instant Quote
 **Subtitle (Apple, 30 chars):** Floors, prices & instant quotes
 **Category:** Lifestyle (Apple) / House & Home (Google)
 
