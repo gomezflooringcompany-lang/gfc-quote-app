@@ -51,6 +51,9 @@ h2{font-size:30px}
 .card canvas{display:block;width:100%;height:110px}
 .card img.photo{display:block;width:100%;height:150px;object-fit:cover;background:var(--soft)}
 .csel{margin-top:4px}
+tr.rhead td{padding-top:14px;border-bottom:0;text-align:left!important;color:var(--accent)}
+.howto ol{margin:6px 0 0;padding-left:20px;line-height:1.5}
+.howto li{margin:3px 0}
 #v-quote.locked > :not(.keep){display:none!important}
 #v-quote:not(.locked) #gate{display:none}
 .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:15px;line-height:1.4}
@@ -246,6 +249,7 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
     </div>
     <div class="total"><span class="rng">Estimated total, material, installation and tax</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
     <div class="panel"><table class="q" id="qTable"></table></div>
+    <div class="panel howto" id="howPanel" style="display:grid;gap:6px"></div>
     <div class="panel" style="display:grid;gap:8px">
       <b>Possible extra costs</b>
       <span class="note">Only if your floor needs it. We check your photos and tell you before any work starts.</span>
@@ -533,11 +537,14 @@ $("addRoom").onclick=()=>{S.rooms.push({name:"Room "+(S.rooms.length+1),lf:0,li:
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
-  let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0;
+  let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
-    const m=a*(1+p.waste)*p.price;const l=lr.unit==="sy"?a/9*lr.rate:a*lr.rate;
-    add(`${r.name}: ${p.name}`,p.service?`${a.toFixed(0)} sq ft, stain, sealer and finish included`:`${a.toFixed(0)} sq ft, includes ${Math.round(p.waste*100)}% extra for cuts`,m,l);
+    const buy=Math.ceil(a*(1+p.waste));if(!p.service)boughtSf+=buy;const m=buy*p.price;const l=lr.unit==="sy"?a/9*lr.rate:a*lr.rate;
+    if(p.service) add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft refinished at ${money2(lr.rate)}/sq ft. Stain, sealer and finish included`,m,l);
+    else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
+      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(p.waste*100)}% extra for cuts and waste, at ${money2(p.price)}/sq ft`,m,0);
+      add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr.unit==="sy"?lr.rate/9:lr.rate)}/sq ft`,0,l);}
     const ex=REMOVAL[r.existing];
     if(ex.rate>0&&p.cat!=="refinish"){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()}`,r.name,0,rl);anyRemoval=true;removedSf+=a}
     if(r.doors>0&&p.cat!=="refinish") add("Transition strips",`${r.name}, ${r.doors} doorway${r.doors>1?"s":""}`,0,r.doors*RATES.transition);
@@ -560,16 +567,30 @@ function calc(){
   let adj=0;if(lab>0&&lab<RATES.minLabor){adj=RATES.minLabor-lab;lines.push({label:"Minimum job adjustment",sub:"Installation minimum is $1,500",amt:adj,adj:true});lab+=adj}
   const tax=mat*RATES.tax;
   const total=mat+lab+tax;
-  return {lines,mat,lab,tax,total,totalSf};
+  return {lines,mat,lab,tax,total,totalSf,boughtSf};
 }
+// Standard installation process shown on the quote, per floor type
+const HOW={
+ lvp:["We move furniture out of the way (if you picked that) and protect walls and doorways.","We remove the old floor and haul it away.","We check the subfloor is flat (within 3/16 in over 10 ft) and fix low spots if needed.","We lay underlayment if your plank needs it.","We install the planks floating (click-together), leaving a small gap at the walls so the floor can move.","We undercut door jambs so the planks slide under them for a clean look.","We add transitions at doorways and quarter round or baseboard along the walls.","We clean up, put furniture back, and walk the job with you."],
+ laminate:["We bring the laminate in 48 hours early so it adjusts to your home.","We move furniture and remove and haul away the old floor.","We check the subfloor is flat and fix low spots if needed.","We lay foam or moisture-barrier underlayment.","We install the planks floating with an expansion gap at the walls.","We undercut door jambs and add transitions at doorways.","We install quarter round or baseboard to cover the gap.","We clean up and walk the job with you."],
+ wood:["We deliver the wood early so it adjusts to your home, and test moisture in the wood and subfloor.","We move furniture and remove and haul away the old floor.","We prepare the subfloor (flat, clean, dry).","We install with glue, nails or floating, depending on the product and your subfloor.","We undercut door jambs and add transitions and stair nosing where needed.","We install quarter round or baseboard.","We clean up and walk the job with you."],
+ carpet:["We move furniture and remove and haul away the old carpet and pad.","We replace damaged tack strip around the room.","We install new pad, stapled and seamed.","We lay the carpet and stretch it tight with a power stretcher so it won't wrinkle.","We make seams where needed and trim clean edges at doorways and closets.","We install metal or wood transitions at hard floors.","We vacuum, put furniture back and walk the job with you."],
+ tile:["We move furniture and remove and haul away the old floor.","We check the floor is flat and solid. Tile needs a very flat floor, so leveling may be needed.","We add crack-isolation membrane on concrete cracks if needed.","We set the tile in thinset mortar with leveling clips for flat, even edges.","We let it set, then grout the joints in the color you choose.","We install baseboard or quarter round and transitions.","No walking on it for 24 hours. We clean up and walk the job with you."],
+ refinish:["We move furniture and cover walls, cabinets and vents with plastic.","We sand the floor to bare wood in 3 passes (coarse to fine), edge the walls and hand-scrape corners.","We vacuum and tack the floor so it's dust free.","You approve the stain color from samples on your floor.","We stain the floor, then apply 1 coat of sealer and 2 coats of Bona Traffic HD finish.","Socks only after 24 hours, furniture back after 72 hours, rugs after 7 days."]};
+const HOWNAME={lvp:"Waterproof vinyl plank",laminate:"Laminate",wood:"Wood",carpet:"Carpet",tile:"Tile",refinish:"Sand and refinish"};
+function renderHow(){const cats=[...new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat))].filter(c=>HOW[c]);
+  $("howPanel").hidden=!cats.length;
+  $("howPanel").innerHTML="<b>How we install your floor</b><span class=\"note\">This is our standard process, so you know exactly what you're paying for.</span>"+
+    cats.map(c=>`<div>${cats.length>1?`<b>${HOWNAME[c]}</b>`:""}<ol>${HOW[c].map(x=>`<li>${x}</li>`).join("")}</ol></div>`).join("")}
 const r50=n=>Math.round(n/50)*50;
 function renderQuote(){
   $("trim").value=S.trim;$("prep").value=S.prep||"ok";$("furn").value=S.furn;$("steps").value=S.steps||0;$("stairType").value=S.stairType||"carpet";$("toilets").value=S.toilets;
   const q=calc();
   $("qTotal").textContent=money(q.total);
-  $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft`:"Add your rooms in step 2";
-  $("qTable").innerHTML=q.lines.map(l=>`<tr class="${l.adj?"adj":""}"><td>${l.label}${l.sub?`<div class="sub">${l.sub}</div>`:""}</td><td>${money(l.amt)}</td></tr>`).join("")+
+  $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft installed${q.boughtSf?` · ${q.boughtSf} sq ft of material purchased`:""}`:"Add your rooms in step 2";
+  $("qTable").innerHTML=q.lines.map(l=>l.head?`<tr class="rhead"><td colspan="2"><b>${l.label}</b></td></tr>`:`<tr class="${l.adj?"adj":""}"><td>${l.label}${l.sub?`<div class="sub">${l.sub}</div>`:""}</td><td>${money(l.amt)}</td></tr>`).join("")+
     `<tr><td>Sales tax on material (10.5%)</td><td>${money(q.tax)}</td></tr><tr><td><b>Material</b> ${money(q.mat)} · <b>Installation</b> ${money(q.lab)}</td><td><b>${money(q.total)}</b></td></tr>`;
+  renderHow();
   $("qExtras").innerHTML=EXTRAS.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join("");
   return q;
 }
