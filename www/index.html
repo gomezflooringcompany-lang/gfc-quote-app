@@ -51,6 +51,11 @@ h2{font-size:30px}
 .card canvas{display:block;width:100%;height:110px}
 .card img.photo{display:block;width:100%;height:150px;object-fit:cover;background:var(--soft)}
 .csel{margin-top:4px}
+.sws{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.swt{flex:0 0 auto;width:64px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;scroll-snap-align:start;text-align:center}
+.swt img{width:64px;height:64px;object-fit:cover;border-radius:10px;display:block;border:2px solid transparent;background:var(--line)}
+.swt[aria-pressed="true"] img{border-color:var(--accent);box-shadow:0 0 0 2px var(--surface) inset}
+.swt span{display:block;font-size:11px;line-height:1.2;margin-top:3px;max-height:2.4em;overflow:hidden;color:var(--muted)}
 tr.rhead td{padding-top:14px;border-bottom:0;text-align:left!important;color:var(--accent)}
 .howto ol{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .howto li{margin:3px 0}
@@ -468,11 +473,14 @@ function renderCatalog(){
       im.src=imgUrl(p.img||p.cardImg,500);im.onerror=()=>{im.replaceWith(cv);thumb(cv,p)};c.append(im)}
     else {c.append(cv);thumb(cv,p)}
     const lab=LABOR[p.labor];const inst=lab.unit==="sy"?lab.rate/9:lab.rate;
-    const colorSel=p.colors&&p.colors.length>1?`<label class="csel">Color<select data-h="${p.h}">${p.colors.map((k,i)=>`<option value="${i}"${i===(S.colorOf[p.h]||0)?" selected":""}>${titleCase(k[0])}</option>`).join("")}</select></label>`:`<span class="meta">${esc(p.color)}</span>`;
+    const ci=S.colorOf[p.h]||0;
+    const colorSel=p.colors&&p.colors.length>1?`<span class="meta"><b>${esc(p.color)}</b> · ${p.colors.length} colors, tap to preview</span><div class="sws" data-h="${p.h}">${p.colors.map((k,i)=>`<button type="button" class="swt" data-i="${i}" aria-pressed="${i===ci}" title="${esc(titleCase(k[0]))}" aria-label="${esc(titleCase(k[0]))}"><img loading="lazy" alt="" src="${imgUrl(k[1],120)}" onerror="this.style.visibility='hidden'"><span>${esc(titleCase(k[0]))}</span></button>`).join("")}</div>`:`<span class="meta">${esc(p.color)}</span>`;
     c.insertAdjacentHTML("beforeend",`<div class="body"><span class="kind">${p.vendor?esc(p.vendor)+" · ":""}${p.kind}</span><span class="title">${esc(p.name)}</span>
       ${p.spec?`<span class="meta">${esc(p.spec)}</span>`:""}${colorSel}
       ${p.service?`<span class="price">Sand and refinish ${money2(inst)}<small> /sq ft</small></span>`:`<span class="price">Material ${money2(p.price)}<small> /sq ft</small></span><span class="price">Installation ${money2(inst)}<small> /sq ft</small></span>`}</div>`);
-    const cs=c.querySelector("select[data-h]");if(cs)cs.onchange=()=>{S.colorOf[p.h]=+cs.value;track("color",p.h+"~"+cs.value);save();renderCatalog()};
+    const sw=c.querySelector(".sws");if(sw){sw.querySelectorAll(".swt").forEach(t=>t.onclick=()=>{const i=+t.dataset.i;S.colorOf[p.h]=i;track("color",p.h+"~"+i);save();
+      const y=window.scrollY,sl=sw.scrollLeft;renderCatalog();window.scrollTo(0,y);const ns=document.querySelector(`.sws[data-h="${p.h}"]`);if(ns)ns.scrollLeft=sl});
+      requestAnimationFrame(()=>{const cur=sw.querySelector('[aria-pressed="true"]');if(cur&&sw.scrollLeft===0&&cur.offsetLeft+cur.offsetWidth>sw.clientWidth)sw.scrollLeft=cur.offsetLeft-12})}
     const sb=document.createElement("button");const has=(S.samples||[]).includes(p.id);sb.className="btn small";sb.style.margin="0 12px 8px";
     sb.textContent=has?"✓ Sample added":"+ Add sample";sb.setAttribute("aria-pressed",has);
     sb.onclick=()=>{S.samples=S.samples||[];if(has)S.samples=S.samples.filter(x=>x!==p.id);else if(S.samples.length>=3){toast("Up to 3 samples for $25");return}else{S.samples.push(p.id);track("sample",p.id)}save();renderCatalog();renderSamples()};
