@@ -1,0 +1,11 @@
+{
+  "name": "gfc-room-scan",
+  "version": "0.1.0",
+  "description": "Camera room measuring for GFC Floor Quote (Apple RoomPlan on iPhone; Android coming)",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": ["ios/", "android/", "GfcRoomScan.podspec", "index.js"],
+  "capacitor": { "ios": { "src": "ios" }, "android": { "src": "android" } },
+  "peerDependencies": { "@capacitor/core": "^6.0.0" }
+}

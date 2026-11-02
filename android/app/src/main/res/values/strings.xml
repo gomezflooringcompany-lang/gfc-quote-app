@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GFC Floor Quote</string>
+    <string name="title_activity_main">GFC Floor Quote</string>
+    <string name="package_name">store.gomezflooringcompany.quote</string>
+    <string name="custom_url_scheme">store.gomezflooringcompany.quote</string>
+</resources>
