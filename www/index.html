@@ -594,7 +594,7 @@ async function dbUpload(path,file){const r=await fetch(DB.url+"/storage/v1/objec
   if(!r.ok)throw new Error("upload "+r.status);return path}
 
 // ---------- CONTACT + ACTIVITY (first-party only, disclosed at collection) ----------
-const PRIVACY_URL="privacy.html";
+const PRIVACY_URL=/gomezflooringcompany\.store|jsdelivr/.test(location.href+document.baseURI)?"https://gomezflooringcompany.store/pages/gfc-instant-quote-privacy":"privacy.html";
 function track(e,d){S.activity=S.activity||[];S.activity.push({t:Date.now(),e,d});if(S.activity.length>300)S.activity=S.activity.slice(-300);save()}
 function interests(){const a=S.activity||[];const cnt={};const fl={};
   a.forEach(x=>{if(x.e==="category")cnt[x.d]=(cnt[x.d]||0)+1;if(["use","color","sample","viz"].includes(x.e)){const p=P(x.d);if(p){cnt[p.cat]=(cnt[p.cat]||0)+1;fl[p.name]=(fl[p.name]||0)+1}}});
