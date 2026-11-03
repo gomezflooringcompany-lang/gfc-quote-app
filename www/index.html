@@ -416,7 +416,7 @@ function fromCatalog(id){
   if(PCACHE[id])return PCACHE[id];
   const [h,ci]=id.split("~");const x=BYH[h];if(!x)return null;const k=x.k[+ci||0]||["",""];const info=CATINFO[x.c];
   const tex=JSON.parse(JSON.stringify(info.tex));
-  const p={id,h,cat:x.c,kind:info.kind,name:x.t,color:titleCase(k[0]),vendor:x.v,spec:x.s,price:x.p,pad:x.d,pattern:x.pt==="h"?"herringbone":x.pt==="c"?"chevron":"standard",labor:info.labor,waste:info.waste,tex,img:k[1]||x.img,cardImg:x.img,colors:x.k};
+  const p={id,h,cat:x.c,kind:info.kind,name:x.t,color:titleCase(k[0]),vendor:x.v,spec:x.s,price:(k[2]||x.p),pad:x.d,pattern:x.pt==="h"?"herringbone":x.pt==="c"?"chevron":"standard",labor:info.labor,waste:info.waste,tex,img:k[1]||x.img,cardImg:x.img,colors:x.k};
   PCACHE[id]=p;return p;
 }
 const REFINISH={id:"refinish",cat:"refinish",kind:"Sand and refinish (your existing hardwood)",name:"Sand and refinish my wood floors",color:"Stain color of your choice",service:true,
