@@ -122,6 +122,7 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .price.tot{font-weight:800;color:var(--ink);border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}
 .qs{display:grid;gap:14px}.qs .qh{font-weight:700;font-size:15px;margin-top:4px}.qs .note{margin-top:-6px}
+.resonly{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#FFF4D6;color:#5C4300;font-size:14px}.resonly a{color:inherit;font-weight:700}
 .donebar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
 .donebar .btn{display:block;width:100%;max-width:728px;margin:0 auto;font-size:17px;padding:14px}
 .donebar .btn[disabled]{opacity:.55}
@@ -150,7 +151,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
   <!-- 1 FLOORS -->
   <section class="view" id="v-floors">
     <div><div class="step">Step 1 of 4</div><h2>Pick your floor</h2>
-      <p class="lead">Tap a floor to use it. You can choose a different floor for each room in step 2.</p></div>
+      <p class="lead">Tap a floor to use it. You can choose a different floor for each room in step 2.</p><p class="resonly"><b>Instant quotes are for homes only (residential).</b> Commercial project? Call <a href="tel:+18182031168">(818) 203-1168</a> for a free estimate.</p></div>
     <div class="chips" id="cats"></div>
     <div class="row"><input id="search" type="search" placeholder="Search a style, brand or color" aria-label="Search floors" style="flex:1;min-width:180px">
       <select id="sort" aria-label="Sort" style="width:auto"><option value="">Sort: featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
@@ -234,7 +235,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
   <!-- 4 QUOTE -->
   <section class="view" id="v-quote" hidden>
     <div class="keep"><button class="back" type="button" data-go="viz">‹ Back</button><div class="step">Step 4 of 4</div><h2>Your instant quote</h2>
-      <p class="lead">Based on your measurements. We confirm the final price with your photos or a quick video call, so no surprises.</p></div>
+      <p class="lead">Based on your measurements. We confirm the final price with your photos or a quick video call, so no surprises.</p><p class="resonly"><b>Instant quotes are for homes only (residential).</b> Commercial project? Call <a href="tel:+18182031168">(818) 203-1168</a> for a free estimate.</p></div>
     <form class="panel keep" id="gate" style="display:grid;gap:12px" novalidate>
       <b style="font-size:20px">Where should we send your quote?</b>
       <span class="note">Enter your info once to see your price. We save your quote so you can come back to it.</span>
