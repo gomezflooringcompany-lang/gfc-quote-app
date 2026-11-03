@@ -121,7 +121,7 @@ nav.tabs button .n{width:26px;height:26px;border-radius:50%;border:2px solid cur
 nav.tabs button[aria-current="page"]{color:var(--accent)}
 nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .price.tot{font-weight:800;color:var(--ink);border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}
-.qs{display:grid;gap:14px}.qs .qh{font-weight:700;font-size:15px;margin-top:4px}.qs .note{margin-top:-6px}
+.qs{display:grid;gap:14px}.qs .two{grid-template-columns:1fr}.qs .qh{font-weight:700;font-size:15px;margin-top:4px}.qs .note{margin-top:-6px}
 .resonly{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#FFF4D6;color:#5C4300;font-size:14px}.resonly a{color:inherit;font-weight:700}
 .donebar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
 .donebar .btn{display:block;width:100%;max-width:728px;margin:0 auto;font-size:17px;padding:14px}
@@ -209,6 +209,23 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     <div class="example" id="exampleNote">These two rooms are an example. Change them to your own rooms.</div>
     <div id="rooms" class="view"></div>
     <button class="btn" id="addRoom">+ Add another room</button>
+    <div class="panel qs" id="extrasPanel">
+      <b style="font-size:19px">A few quick questions</b>
+      <span class="note">These add the rest of the costs (removal, trim, stairs and so on) to your quote. Not sure? Pick "not sure" and we confirm from your photos.</span>
+      <div class="two">
+        <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
+        <label id="patternRow">How do you want the planks laid?<select id="pattern"><option value="standard">Straight (standard)</option><option value="herringbone">Herringbone</option><option value="chevron">Chevron (wood only)</option></select></label>
+        <label id="padRow" style="grid-column:1/-1">Does your new floor have a pad attached underneath?<select id="pad"><option value="yes">Yes, it has a pad attached (no extra cost)</option><option value="foam">No, add foam underlayment ($0.75/sq ft)</option><option value="cork">No, add quieter cork underlayment ($1.75/sq ft)</option><option value="unsure">Not sure (we add foam, and remove it if not needed)</option></select></label>
+        <label>Floor underneath, any problems?<select id="prep"><option value="ok">Flat and in good shape</option><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option><option value="unsure">Not sure</option></select></label>
+        <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
+        <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please ($125 per room)</option><option value="no">No, rooms will be empty</option></select></label>
+        <label>Stairs: how many steps? (0 if none)<input id="steps" type="number" min="0" max="60" value="0" inputmode="numeric"></label>
+        <label id="stairTypeRow">Type of stairs<select id="stairType"><option value="carpet">Carpet stairs ($45/step + carpet)</option><option value="box">Hard floor, wall on both sides ($85/step)</option><option value="open1">Hard floor, one open side ($180/step)</option><option value="open2">Hard floor, both sides open ($205/step)</option></select></label>
+        <label id="nosingRow">Landing edges that need nosing<input id="nosings" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
+        <label>Doors to trim so they clear the new floor<input id="doorTrim" type="number" min="0" max="30" value="0" inputmode="numeric"></label>
+        <label>Toilets to pull and reset<input id="toilets" type="number" min="0" max="6" value="0" inputmode="numeric"></label>
+        <label>Appliances to pull and reset (fridge, stove, washer)<input id="appliances" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
+      </div>
   </section>
 
   <!-- 3 VISUALIZE -->
@@ -251,23 +268,6 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
       <span class="note" id="gErr" style="color:#B42318" hidden>Please enter your name and a valid email.</span>
       <button class="btn primary" type="submit">Show my quote</button>
     </form>
-    <div class="panel qs" id="extrasPanel">
-      <b style="font-size:19px">A few quick questions</b>
-      <span class="note">Your answers add the rest of the costs to your quote. Not sure? Pick "not sure" and we confirm from your photos.</span>
-      <div class="two">
-        <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
-        <label id="patternRow">How do you want the planks laid?<select id="pattern"><option value="standard">Straight (standard)</option><option value="herringbone">Herringbone</option><option value="chevron">Chevron (wood only)</option></select></label>
-        <label id="padRow" style="grid-column:1/-1">Does your new floor have a pad attached underneath?<select id="pad"><option value="yes">Yes, it has a pad attached (no extra cost)</option><option value="foam">No, add foam underlayment ($0.75/sq ft)</option><option value="cork">No, add quieter cork underlayment ($1.75/sq ft)</option><option value="unsure">Not sure (we add foam, and remove it if not needed)</option></select></label>
-        <label>Floor underneath, any problems?<select id="prep"><option value="ok">Flat and in good shape</option><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option><option value="unsure">Not sure</option></select></label>
-        <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
-        <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please ($125 per room)</option><option value="no">No, rooms will be empty</option></select></label>
-        <label>Stairs: how many steps? (0 if none)<input id="steps" type="number" min="0" max="60" value="0" inputmode="numeric"></label>
-        <label id="stairTypeRow">Type of stairs<select id="stairType"><option value="carpet">Carpet stairs ($45/step + carpet)</option><option value="box">Hard floor, wall on both sides ($85/step)</option><option value="open1">Hard floor, one open side ($180/step)</option><option value="open2">Hard floor, both sides open ($205/step)</option></select></label>
-        <label id="nosingRow">Landing edges that need nosing<input id="nosings" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
-        <label>Doors to trim so they clear the new floor<input id="doorTrim" type="number" min="0" max="30" value="0" inputmode="numeric"></label>
-        <label>Toilets to pull and reset<input id="toilets" type="number" min="0" max="6" value="0" inputmode="numeric"></label>
-        <label>Appliances to pull and reset (fridge, stove, washer)<input id="appliances" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
-      </div>
     </div>
     </div>
     <div class="total"><span class="rng">Estimated total, material, installation and tax</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
@@ -549,7 +549,7 @@ function renderRooms(){
     <div class="area" id="ar${i}"></div>`;
     el.append(d);
     const map={rn:"name",lf:"lf",li:"li",wf:"wf",wi:"li2",ef:"ef",ei:"ei",xf:"xf",xi:"xi",fl:"floor",ex:"existing",dr:"doors"};
-    Object.entries(map).forEach(([pre,key])=>{const inp=$(pre+i);inp.addEventListener("input",()=>{r[key]=inp.type==="number"?(+inp.value||0):inp.value;S.example=false;$("exampleNote").hidden=true;save();showArea(i)})});
+    Object.entries(map).forEach(([pre,key])=>{const inp=$(pre+i);inp.addEventListener("input",()=>{r[key]=inp.type==="number"?(+inp.value||0):inp.value;S.example=false;$("exampleNote").hidden=true;save();showArea(i);if(key==="floor")extrasUI()})});
     showArea(i);
   });
   el.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.rooms.splice(+b.dataset.del,1);S.example=false;save();renderRooms()});
@@ -631,11 +631,14 @@ function renderHow(){const cats=[...new Set(S.rooms.filter(r=>roomArea(r)>0).map
   $("howPanel").innerHTML="<b>How we install your floor</b><span class=\"note\">This is our standard process, so you know exactly what you're paying for.</span>"+
     cats.map(c=>`<div>${cats.length>1?`<b>${HOWNAME[c]}</b>`:""}<ol>${HOW[c].map(x=>`<li>${x}</li>`).join("")}</ol></div>`).join("")}
 const r50=n=>Math.round(n/50)*50;
-function renderQuote(){
+function extrasUI(){
   $("trim").value=S.trim;$("prep").value=S.prep||"ok";$("furn").value=S.furn;$("steps").value=S.steps||0;$("stairType").value=S.stairType||"carpet";$("toilets").value=S.toilets;
   $("sub").value=S.sub||"concrete";$("pattern").value=S.pattern||"standard";$("pad").value=S.pad||"unsure";$("nosings").value=S.nosings||0;$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
   {const cats=new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat));$("padRow").hidden=!(cats.has("lvp")||cats.has("laminate"));$("patternRow").hidden=!(cats.has("lvp")||cats.has("laminate")||cats.has("wood"));
    const st=+S.steps||0;$("stairTypeRow").hidden=st<=0;$("nosingRow").hidden=st<=0||(S.stairType||"carpet")==="carpet"}
+}
+function renderQuote(){
+  extrasUI();
   const q=calc();
   $("qTotal").textContent=money(q.total);
   $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft installed${q.boughtSf?` · ${q.boughtSf} sq ft of material purchased`:""}`:"Add your rooms in step 2";
@@ -829,7 +832,7 @@ function go(v){S.view=v;save();
   ["floors","measure","viz","quote"].forEach(k=>{$("v-"+k).hidden=k!==v});
   document.querySelectorAll("nav.tabs button").forEach(b=>{if(b.dataset.v===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   if(v==="floors"){renderCats();renderCatalog();renderSamples()}
-  if(v==="measure")renderRooms();
+  if(v==="measure"){renderRooms();extrasUI()}
   if(v==="viz"){renderVizControls();if(!basePixels)sampleRoom();else renderViz()}
   if(v==="quote"){gateUI();renderQuote();refUI()}
   doneUI();window.scrollTo(0,0);
@@ -841,9 +844,9 @@ function doneUI(){const v=S.view,bar=$("doneBar"),b=$("doneBtn");S.done=S.done||
   document.querySelectorAll("nav.tabs button").forEach((t,i)=>{const d=S.done[t.dataset.v]&&t.dataset.v!==v;t.classList.toggle("isdone",!!d);t.querySelector(".n").textContent=d?"✓":String(i+1)})}
 $("doneBtn").onclick=()=>{const v=S.view,i=STEPS.indexOf(v);if(i<0||i>2)return;S.done=S.done||{};S.done[v]=1;save();track("done",v);go(STEPS[i+1]);toast("Step "+(i+1)+" done ✓")};
 document.querySelectorAll("[data-upd]").forEach(b=>b.onclick=()=>{const t=b.dataset.upd;track("update",t);
-  if(t==="extras"){const e=$("extrasPanel");e.scrollIntoView({behavior:"smooth",block:"start"});e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")}
+  if(t==="extras"){go("measure");const e=$("extrasPanel");e.scrollIntoView({behavior:"smooth",block:"start"});e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")}
   else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Done":"Change your rooms, then tap Done")}});
-function flashTotal(){const t=document.querySelector(".total");if(!t)return;t.classList.remove("flash");void t.offsetWidth;t.classList.add("flash");toast("Quote updated")}
+function flashTotal(){if(S.view!=="quote"){extrasUI();return}const t=document.querySelector(".total");if(!t)return;t.classList.remove("flash");void t.offsetWidth;t.classList.add("flash");toast("Quote updated")}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 let srchT;$("search").addEventListener("input",()=>{shown=24;renderCatalog();clearTimeout(srchT);srchT=setTimeout(()=>{const v=$("search").value.trim();if(v.length>2)track("search",v)},1500)});
 $("sort").addEventListener("change",()=>{shown=24;renderCatalog()});
