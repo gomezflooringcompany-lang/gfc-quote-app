@@ -216,7 +216,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
         <label>Any cracks, bumps or dips in the floor underneath?<select id="prepYN"><option value="no">No, it's flat</option><option value="yes">Yes</option><option value="unsure">Not sure</option></select></label>
         <label id="prepRow">What kind?<select id="prep"><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option></select></label>
-        <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
+        <label>Baseboards and trim<select id="trim"><option value="quarter">Keep my baseboards, add new quarter round</option><option value="reinstall">Keep my baseboards (we take them off and put them back)</option><option value="baseboard">Remove my baseboards and install new ones</option></select></label>
         <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please ($125 per room)</option><option value="no">No, rooms will be empty</option></select></label>
         <label>Any stairs getting new floor?<select id="hasStairs"><option value="no">No</option><option value="yes">Yes</option></select></label>
         <label id="stepsRow">How many steps?<input id="steps" type="number" min="1" max="60" value="0" inputmode="numeric"></label>
@@ -862,6 +862,7 @@ let srchT;$("search").addEventListener("input",()=>{shown=24;renderCatalog();cle
 $("sort").addEventListener("change",()=>{shown=24;renderCatalog()});
 $("more").onclick=()=>{shown+=24;renderCatalog()};
 function boot(){
+  if(!["quarter","reinstall","baseboard"].includes(S.trim))S.trim="quarter";
   if(!S.hasStairs)S.hasStairs=(+S.steps||0)>0?"yes":"no";
   if(!CATS.some(c=>c[0]===S.cat))S.cat="lvp";
   if(CATALOG.length){
