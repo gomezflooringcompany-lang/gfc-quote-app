@@ -280,7 +280,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     </form>
     </div>
     </div>
-    <div class="total"><span class="rng">Estimated total, material, installation and tax</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
+    <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping to be determined)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
     <div class="panel upd" id="updPanel">
       <b>Update my quote</b>
       <span class="note">Change anything and your price updates right away.</span>
@@ -655,7 +655,7 @@ function renderQuote(){
   $("qTotal").textContent=money(q.total);
   $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft installed${q.boughtSf?` · ${q.boughtSf} sq ft of material purchased`:""}`:"Add your rooms in step 2";
   $("qTable").innerHTML=q.lines.map(l=>l.head?`<tr class="rhead"><td colspan="2"><b>${l.label}</b></td></tr>`:`<tr class="${l.adj?"adj":""}"><td>${l.label}${l.sub?`<div class="sub">${l.sub}</div>`:""}</td><td>${money(l.amt)}</td></tr>`).join("")+
-    `<tr><td>Sales tax on material (10.5%)</td><td>${money(q.tax)}</td></tr><tr><td><b>Material</b> ${money(q.mat)} · <b>Installation</b> ${money(q.lab)}</td><td><b>${money(q.total)}</b></td></tr>`;
+    `<tr><td>Sales tax on material (10.5%)</td><td>${money(q.tax)}</td></tr><tr><td><b>Material</b> ${money(q.mat)} · <b>Installation</b> ${money(q.lab)}</td><td><b>${money(q.total)}</b></td></tr><tr><td>Shipping of your material<div class="sub">Depends on the floor and supplier. We confirm it when we order your floor.</div></td><td><b>To be determined</b></td></tr>`;
   renderHow();
   $("qExtras").innerHTML=EXTRAS.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join("");
   return q;
@@ -726,7 +726,7 @@ $("sendBtn").onclick=()=>{
   if(!$("refPanel").hidden&&$("stains").value==="yes"&&!refPhotos.length){toast("Please add a photo of each stain first");$("refPanel").scrollIntoView({behavior:"smooth"});return}
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
-  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
+  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} + shipping TBD (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
   $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
