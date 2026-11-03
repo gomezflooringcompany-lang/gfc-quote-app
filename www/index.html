@@ -123,6 +123,12 @@ nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:va
 .price.tot{font-weight:800;color:var(--ink);border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}
 .qs{display:grid;gap:14px}.qs .two{grid-template-columns:1fr}.qs .qh{font-weight:700;font-size:15px;margin-top:4px}.qs .note{margin-top:-6px}
 .resonly{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#FFF4D6;color:#5C4300;font-size:14px}.resonly a{color:inherit;font-weight:700}
+.srch{position:relative;flex:1;min-width:180px}.srch input{width:100%}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:8;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(15,31,61,.15);overflow:hidden;max-height:60vh;overflow-y:auto}
+.sugg button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 12px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
+.sugg button:last-child{border-bottom:0}.sugg button:hover,.sugg button.on{background:var(--bg)}
+.sugg img{width:40px;height:28px;object-fit:cover;border-radius:5px;flex:none;background:var(--line)}.sugg .sl{font-size:12px;color:var(--muted);display:block}
+.sugg mark{background:none;color:var(--accent);font-weight:800}
 .donebar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
 .donebar .btn{display:block;width:100%;max-width:728px;margin:0 auto;font-size:17px;padding:14px}
 .donebar .btn[disabled]{opacity:.55}
@@ -153,7 +159,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     <div><div class="step">Step 1 of 4</div><h2>Pick your floor</h2>
       <p class="lead">Tap a floor to use it. You can choose a different floor for each room in step 2.</p><p class="resonly"><b>Instant quotes are for homes only (residential).</b> Commercial project? Call <a href="tel:+18182031168">(818) 203-1168</a> for a free estimate.</p></div>
     <div class="chips" id="cats"></div>
-    <div class="row"><input id="search" type="search" placeholder="Search a style, brand or color" aria-label="Search floors" style="flex:1;min-width:180px">
+    <div class="row"><div class="srch"><input id="search" type="search" placeholder="Search a style, brand or color" aria-label="Search floors" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sugg"><div class="sugg" id="sugg" role="listbox" hidden></div></div>
       <select id="sort" aria-label="Sort" style="width:auto"><option value="">Sort: featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
     <span class="note" id="count"></span>
     <div class="grid" id="catalog"></div>
@@ -858,7 +864,36 @@ document.querySelectorAll("[data-upd]").forEach(b=>b.onclick=()=>{const t=b.data
   else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Done":"Change your rooms, then tap Done")}});
 function flashTotal(){if(S.view!=="quote"){extrasUI();return}const t=document.querySelector(".total");if(!t)return;t.classList.remove("flash");void t.offsetWidth;t.classList.add("flash");toast("Quote updated")}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>go(b.dataset.v));
-let srchT;$("search").addEventListener("input",()=>{shown=24;renderCatalog();clearTimeout(srchT);srchT=setTimeout(()=>{const v=$("search").value.trim();if(v.length>2)track("search",v)},1500)});
+// search suggestions (all categories)
+let SIDX=null;const CATNAME=Object.fromEntries(CATS);
+function buildSidx(){SIDX=[];const brands={};
+  CATALOG.forEach(x=>{if(x.v){const b=brands[x.v+"|"+x.c]=brands[x.v+"|"+x.c]||{type:"brand",label:x.v,c:x.c,n:0,img:x.img};b.n++}
+    SIDX.push({type:"style",label:x.t,sub:(x.v||"")+" · "+CATNAME[x.c],c:x.c,h:x.h,img:x.img});
+    x.k.forEach((k,i)=>SIDX.push({type:"color",label:titleCase(k[0]),sub:x.t+" · "+CATNAME[x.c],c:x.c,h:x.h,i,img:k[1]}))});
+  Object.values(brands).forEach(b=>SIDX.push({...b,sub:b.n+" floor"+(b.n>1?"s":"")+" · "+CATNAME[b.c]}))}
+let suggList=[],suggOn=-1;
+function renderSugg(){const el=$("sugg"),q=$("search").value.toLowerCase().trim();
+  if(!CATALOG.length||q.length<2||document.activeElement!==$("search")){el.hidden=true;$("search").setAttribute("aria-expanded","false");return}
+  if(!SIDX)buildSidx();
+  const rank=e=>{const l=e.label.toLowerCase();const st=l.startsWith(q)?0:l.split(/[\s|]+/).some(w=>w.startsWith(q))?1:l.includes(q)?2:9;return st*10+(e.c===S.cat?0:3)+(e.type==="brand"?0:e.type==="style"?1:2)};
+  const seen=new Set();suggList=SIDX.map(e=>[rank(e),e]).filter(r=>r[0]<90).sort((a,b)=>a[0]-b[0]).map(r=>r[1]).filter(e=>{const k=e.type+e.label+e.c;if(seen.has(k))return false;seen.add(k);return true}).slice(0,8);
+  if(!suggList.length){el.hidden=true;return}
+  if(typeof needChunk==="function")suggList.forEach(e=>e.type==="color"&&needChunk(e.h));
+  const hi=t=>{const i=t.toLowerCase().indexOf(q);return i<0?esc(t):esc(t.slice(0,i))+"<mark>"+esc(t.slice(i,i+q.length))+"</mark>"+esc(t.slice(i+q.length))};
+  el.innerHTML=suggList.map((e,n)=>`<button type="button" role="option" data-n="${n}"${n===suggOn?' class="on"':""}><img alt="" src="${imgUrl(e.img,120)}" onerror="this.style.visibility='hidden'"><span><span>${hi(e.label)}</span><span class="sl">${e.type==="brand"?"Brand":e.type==="color"?"Color":"Style"} · ${esc(e.sub)}</span></span></button>`).join("");
+  el.hidden=false;$("search").setAttribute("aria-expanded","true");
+  el.querySelectorAll("button").forEach(b=>b.onmousedown=ev=>{ev.preventDefault();pickSugg(suggList[+b.dataset.n])})}
+function pickSugg(e){if(!e)return;track("suggest",e.type+":"+e.label);
+  if(e.c!==S.cat){S.cat=e.c;renderCats()}
+  if(e.type==="color"){S.colorOf[e.h]=e.i;$("search").value=BYH[e.h]?BYH[e.h].t:e.label}else $("search").value=e.label;
+  save();shown=24;$("sugg").hidden=true;$("search").blur();renderCatalog();
+  const card=document.querySelector(".card");if(card)card.scrollIntoView({behavior:"smooth",block:"start"})}
+$("search").addEventListener("keydown",ev=>{if($("sugg").hidden)return;
+  if(ev.key==="ArrowDown"||ev.key==="ArrowUp"){ev.preventDefault();suggOn=Math.max(0,Math.min(suggList.length-1,suggOn+(ev.key==="ArrowDown"?1:-1)));renderSugg()}
+  else if(ev.key==="Enter"&&suggOn>=0){ev.preventDefault();pickSugg(suggList[suggOn])}else if(ev.key==="Escape"){$("sugg").hidden=true}});
+$("search").addEventListener("blur",()=>setTimeout(()=>{$("sugg").hidden=true},150));
+$("search").addEventListener("focus",renderSugg);
+let srchT;$("search").addEventListener("input",()=>{suggOn=-1;renderSugg();shown=24;renderCatalog();clearTimeout(srchT);srchT=setTimeout(()=>{const v=$("search").value.trim();if(v.length>2)track("search",v)},1500)});
 $("sort").addEventListener("change",()=>{shown=24;renderCatalog()});
 $("more").onclick=()=>{shown+=24;renderCatalog()};
 function boot(){
