@@ -241,7 +241,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
   <!-- 3 VISUALIZE -->
   <section class="view" id="v-viz" hidden>
     <div><button class="back" type="button" data-go="measure">‹ Back</button><div class="step">Step 3 of 4</div><h2>See it in your room</h2>
-      <p class="lead">Take or upload a photo of your room. Drag the 4 dots to the corners of the floor, then tap a floor to try it.</p></div>
+      <p class="lead">Take or upload a photo of your room and drag the 4 dots to the corners of the floor. Try as many floors and colors as you like, then tap Finalize my selection.</p></div>
     <div class="row">
       <label class="btn primary small" for="photoIn" style="display:inline-block;color:var(--accent-ink)">Take or upload a photo</label>
       <input id="photoIn" type="file" accept="image/*" capture="environment" hidden>
@@ -250,7 +250,13 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     </div>
     <div class="viz" id="viz"><canvas id="vizCanvas"></canvas><svg id="vizSvg" preserveAspectRatio="none"><polygon id="vizPoly" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"></polygon></svg></div>
     <div class="row"><label style="flex:1;min-width:160px">Room in this photo<select id="vizRoom"></select></label></div>
-    <div class="swatches" id="vizSw"></div>
+    <div class="panel" id="vizPick" style="display:grid;gap:10px">
+      <div id="vizNow"></div>
+      <div class="srch"><input id="vizSearch" type="search" placeholder="Try another floor: search a style, brand or color" aria-label="Try another floor" autocomplete="off"><div class="sugg" id="vizSugg" role="listbox" hidden></div></div>
+      <span class="note">Floors you've tried (tap to compare):</span>
+      <div class="swatches" id="vizSw"></div>
+      <label class="chk"><input type="checkbox" id="vizAll" checked> <span>Use this floor in every room</span></label>
+    </div>
     <p class="note">Preview only. Furniture in the photo will be covered by the floor. Your photos stay on your phone in this test version.</p>
     <div class="panel" style="display:grid;gap:10px">
       <b>Room photos for your quote</b>
@@ -838,9 +844,39 @@ function renderVizControls(){
     const b=document.createElement("button");b.className="sw";b.setAttribute("aria-pressed",vizProduct.id===p.id);
     const cv=document.createElement("canvas");cv.width=140;cv.height=96;cv.getContext("2d").drawImage(makeTex(p).canvas,0,0,140*2.4,96*2.4,0,0,140,96);
     b.append(cv);b.append(document.createTextNode(p.color||p.name));b.title=p.name;b.onclick=()=>{vizProduct=p;track("viz",p.id);renderVizControls();renderViz()};el.append(b)});
-  if(list.length<2)el.insertAdjacentHTML("beforeend",'<p class="muted" style="font-size:13px;margin:6px 0 0">Tap “Use this floor” on more floors to compare them here.</p>');
+  if(list.length<2)el.insertAdjacentHTML("beforeend",'<p class="muted" style="font-size:13px;margin:6px 0 0">Search above to try more floors here.</p>');
+  renderVizNow();
 }
-$("vizRoom").addEventListener("change",()=>{S.vizRoom=+$("vizRoom").value;save();renderViz()});
+$("vizRoom").addEventListener("change",()=>{S.vizRoom=+$("vizRoom").value;save();renderViz();renderVizNow()});
+function renderVizNow(){const p=vizProduct,el=$("vizNow");if(!p){el.innerHTML="";return}
+  const room=S.rooms[S.vizRoom]||S.rooms[0];const a=room?roomArea(room):0;const lr=LABOR[laborKey(p)]||LABOR[p.labor];const inst=lr.unit==="sy"?lr.rate/9:lr.rate;
+  const est=a>0?(p.service?a*inst:Math.ceil(a*(1+(/herring|chevron/.test(laborKey(p))?0.22:p.waste)))*p.price*(1+RATES.tax)+a*inst):0;
+  const h=p.h,cols=p.colors&&p.colors.length>1?p.colors:null,ci=S.colorOf&&h?S.colorOf[h]||0:0;
+  el.innerHTML=`<span class="note">Showing in your room</span><b style="font-size:18px">${esc(p.name)}${p.color?", "+esc(p.color):""}</b>
+    <span>${p.service?`Sand and refinish ${money2(inst)}/sq ft`:`Floor ${money2(p.price)} + installation ${money2(inst)} = <b>${money2(p.price+inst)}/sq ft</b>`}</span>
+    ${est>0?`<span class="note">About <b>${money(est)}</b> for ${esc(room.name)} (${a.toFixed(0)} sq ft, floor + installation + tax). Extras are on your quote.</span>`:""}
+    ${cols?`<div class="sws" style="margin-top:6px">${cols.map((k,i)=>`<button type="button" class="swt" data-i="${i}" aria-pressed="${i===ci}" title="${esc(titleCase(k[0]))}"><img loading="lazy" alt="" src="${imgUrl(k[1],240)}" onerror="this.style.visibility='hidden'"><span>${esc(titleCase(k[0]))}</span></button>`).join("")}</div>`:""}`;
+  el.style.display="grid";el.style.gap="4px";
+  el.querySelectorAll(".swt").forEach(t=>t.onclick=()=>{const i=+t.dataset.i;S.colorOf[h]=i;save();const np=P(h+"~"+i);if(np){vizProduct=np;track("vizcolor",np.id);addTried(np.id);renderVizControls();renderViz()}})}
+function addTried(id){S.picked=(S.picked||[]).filter(x=>x!==id);S.picked.unshift(id);S.picked=S.picked.slice(0,8);save()}
+let vSugg=[];
+function renderVizSugg(){const el=$("vizSugg"),q=$("vizSearch").value.toLowerCase().trim();
+  if(!CATALOG.length||q.length<2||document.activeElement!==$("vizSearch")){el.hidden=true;return}
+  if(!SIDX)buildSidx();
+  const rank=e=>{const l=e.label.toLowerCase();const st=l.startsWith(q)?0:l.split(/[\s|]+/).some(w=>w.startsWith(q))?1:l.includes(q)?2:9;return st*10+(e.type==="style"?0:1)};
+  const brandHit=SIDX.filter(e=>e.type==="brand"&&e.label.toLowerCase().includes(q)).map(e=>e.label);
+  vSugg=SIDX.filter(e=>e.type!=="brand").map(e=>[brandHit.length&&e.type==="style"&&brandHit.some(b=>e.sub.startsWith(b))?5:rank(e),e]).filter(r=>r[0]<90).sort((a,b)=>a[0]-b[0]).map(r=>r[1]).slice(0,8);
+  if(!vSugg.length){el.hidden=true;return}
+  if(typeof needChunk==="function")vSugg.forEach(e=>needChunk(e.h));
+  el.innerHTML=vSugg.map((e,n)=>`<button type="button" data-n="${n}"><img alt="" src="${imgUrl(e.img,120)}" onerror="this.style.visibility='hidden'"><span><span>${esc(e.label)}</span><span class="sl">${e.type==="color"?"Color":"Style"} · ${esc(e.sub)}</span></span></button>`).join("");
+  el.hidden=false;el.querySelectorAll("button").forEach(b=>b.onmousedown=ev=>{ev.preventDefault();const e=vSugg[+b.dataset.n];
+    const id=e.h+"~"+(e.type==="color"?e.i:(S.colorOf[e.h]||0));if(e.type==="color")S.colorOf[e.h]=e.i;const np=P(id);if(!np)return;
+    vizProduct=np;addTried(np.id);track("viztry",np.id);$("vizSearch").value="";el.hidden=true;$("vizSearch").blur();renderVizControls();renderViz();toast("Showing "+np.name+(np.color?", "+np.color:""))})}
+$("vizSearch").addEventListener("input",renderVizSugg);$("vizSearch").addEventListener("focus",renderVizSugg);
+$("vizSearch").addEventListener("blur",()=>setTimeout(()=>{$("vizSugg").hidden=true},150));
+function finalizeViz(){const p=vizProduct;if(!p)return;
+  if($("vizAll").checked){S.rooms.forEach(r=>r.floor=p.id);S.chosen=p.id}else{const r=S.rooms[S.vizRoom]||S.rooms[0];if(r)r.floor=p.id}
+  track("finalize",p.id);save()}
 
 // ---------- NAV ----------
 document.querySelectorAll("button.back").forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -853,12 +889,12 @@ function go(v){S.view=v;save();
   if(v==="quote"){gateUI();renderQuote();refUI()}
   doneUI();window.scrollTo(0,0);
 }
-const STEPS=["floors","measure","viz","quote"],NEXTLBL={floors:"Done ✓  Next: measure your rooms ›",measure:"Done ✓  Next: see it in your room ›",viz:"Done ✓  Next: show my quote ›"};
+const STEPS=["floors","measure","viz","quote"],NEXTLBL={floors:"Done ✓  Next: measure your rooms ›",measure:"Done ✓  Next: see it in your room ›",viz:"Finalize my selection ✓"};
 function doneUI(){const v=S.view,bar=$("doneBar"),b=$("doneBtn");S.done=S.done||{};
   bar.hidden=!NEXTLBL[v];document.querySelector("main").classList.toggle("withdone",!!NEXTLBL[v]);
   if(NEXTLBL[v]){const ok=v!=="floors"||!!S.chosen;b.disabled=!ok;b.textContent=ok?NEXTLBL[v]:"Pick a floor above to continue"}
   document.querySelectorAll("nav.tabs button").forEach((t,i)=>{const d=S.done[t.dataset.v]&&t.dataset.v!==v;t.classList.toggle("isdone",!!d);t.querySelector(".n").textContent=d?"✓":String(i+1)})}
-$("doneBtn").onclick=()=>{const v=S.view,i=STEPS.indexOf(v);if(i<0||i>2)return;S.done=S.done||{};S.done[v]=1;save();track("done",v);go(STEPS[i+1]);toast("Step "+(i+1)+" done ✓")};
+$("doneBtn").onclick=()=>{const v=S.view,i=STEPS.indexOf(v);if(i<0||i>2)return;if(v==="viz")finalizeViz();S.done=S.done||{};S.done[v]=1;save();track("done",v);go(STEPS[i+1]);toast("Step "+(i+1)+" done ✓")};
 document.querySelectorAll("[data-upd]").forEach(b=>b.onclick=()=>{const t=b.dataset.upd;track("update",t);
   if(t==="extras"){go("measure");const e=$("extrasPanel");e.scrollIntoView({behavior:"smooth",block:"start"});e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")}
   else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Done":"Change your rooms, then tap Done")}});
