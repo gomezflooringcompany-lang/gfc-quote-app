@@ -582,10 +582,10 @@ function calc(){
   let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
-    const lk=laborKey(p),lr2=LABOR[lk]||lr;const buy=Math.ceil(a*(1+p.waste+(lk!==p.labor&&/herring|chevron/.test(lk)?0.05:0)));if(!p.service)boughtSf+=buy;const m=buy*p.price;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
+    const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const m=buy*p.price;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
     if(p.service) add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft refinished at ${money2(lr.rate)}/sq ft. Stain, sealer and finish included`,m,l);
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
-      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(p.waste*100)}% extra for cuts and waste, at ${money2(p.price)}/sq ft`,m,0);
+      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(p.price)}/sq ft`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}${(p.cat==="lvp"||p.cat==="laminate")&&S.sub!=="wood"?". Plastic moisture film over concrete included":""}`,0,l);
       if((p.cat==="lvp"||p.cat==="laminate")&&S.pad!=="yes"){const u=S.pad==="cork"?["Cork underlayment (quieter)",RATES.underlayCork]:["Foam underlayment",RATES.underlayFoam];add(`${u[0]}: ${a.toFixed(0)} sq ft`,`${money2(u[1])}/sq ft installed${S.pad==="unsure"?". Only if your floor has no pad attached, we check":""}`,0,a*u[1])}}
     const ex=REMOVAL[r.existing];
