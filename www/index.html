@@ -217,8 +217,9 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <label>Floor underneath, any problems?<select id="prep"><option value="ok">Flat and in good shape</option><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option><option value="unsure">Not sure</option></select></label>
         <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
         <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please ($125 per room)</option><option value="no">No, rooms will be empty</option></select></label>
-        <label>Stairs: how many steps? (0 if none)<input id="steps" type="number" min="0" max="60" value="0" inputmode="numeric"></label>
-        <div id="stairPhotoRow" style="display:grid;gap:6px"><span class="note">Please add a photo of your stairs (from the bottom, showing the sides). We use it to confirm the stair price.</span>
+        <label>Any stairs getting new floor?<select id="hasStairs"><option value="no">No</option><option value="yes">Yes</option></select></label>
+        <label id="stepsRow">How many steps?<input id="steps" type="number" min="1" max="60" value="0" inputmode="numeric"></label>
+        <div id="stairPhotoRow" style="display:grid;gap:6px"><span class="note">Please add a photo of your stairs, taken from the bottom so we can see the sides. We use it to confirm your stair price.</span>
           <label class="btn small" style="justify-self:start;cursor:pointer">📷 Add a photo of the stairs<input id="stairIn" type="file" accept="image/*" capture="environment" multiple hidden></label>
           <span class="note" id="stairList">No stair photo yet.</span></div>
         <label>Doors to trim so they clear the new floor<input id="doorTrim" type="number" min="0" max="30" value="0" inputmode="numeric"></label>
@@ -604,7 +605,7 @@ function calc(){
   if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
   if(S.prep==="level"&&totalSf>0){const bags=Math.max(2,Math.ceil((hardSf||totalSf)/100));add(`Floor prep: self-leveler, about ${bags} bags`,`${money(RATES.selfLevelBag)} per 50 lb bag installed, material included. Estimate, we confirm from your photos`,0,bags*RATES.selfLevelBag)}
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
-  const st=Math.max(0,Math.min(60,Math.round(+S.steps||0)));
+  const st=S.hasStairs==="yes"?Math.max(0,Math.min(60,Math.round(+S.steps||0))):0;
   const stT=stairKind();if(st>0){if(stT==="carpet"){add(`Carpet stairs: ${st} step${st>1?"s":""}`,`${money(RATES.stepCarpet)} per step plus carpet and pad. We confirm from your stair photo`,st*RATES.stepMatCarpet,st*RATES.stepCarpet)}
     else{const k=["priced as closed steps (wall on both sides). Open sides cost more, we confirm from your photo",RATES.stepBox];
       add(`Hard floor stairs: ${st} step${st>1?"s":""}`,`${money(k[1])} per step plus treads and nosing. Priced as closed steps; open sides or landings cost more, we confirm from your stair photo`,st*RATES.stepMatHard,st*k[1])}}
@@ -634,7 +635,7 @@ function extrasUI(){
   $("trim").value=S.trim;$("prep").value=S.prep||"ok";$("furn").value=S.furn;$("steps").value=S.steps||0;$("toilets").value=S.toilets;
   $("sub").value=S.sub||"concrete";$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
   {const cats=new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat));
-   const st=+S.steps||0;$("stairPhotoRow").hidden=st<=0}
+   const hs=S.hasStairs==="yes";$("hasStairs").value=hs?"yes":"no";$("stepsRow").hidden=!hs;$("stairPhotoRow").hidden=!hs}
 }
 function renderQuote(){
   extrasUI();
@@ -660,7 +661,7 @@ $("sampleBtn").onclick=()=>{
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
-["trim","prep","furn","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
+["trim","prep","furn","hasStairs","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
 const DB={url:"",key:"",company:"gfc"};
 const dbOn=()=>!!(DB.url&&DB.key);
@@ -710,7 +711,7 @@ $("sendBtn").onclick=()=>{
   if(!$("refPanel").hidden&&$("stains").value==="yes"&&!refPhotos.length){toast("Please add a photo of each stain first");$("refPanel").scrollIntoView({behavior:"smooth"});return}
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
-  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.steps||0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
+  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
   $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
@@ -721,7 +722,7 @@ async function sendOnline(q){const id=uid(),c=S.contact||{};const btn=$("sendBtn
     for(let i=0;i<refPhotos.length;i++){$("sentMsg").textContent=`Uploading photo ${i+1} of ${refPhotos.length}...`;paths.push(await dbUpload(`${id}/floor-${i+1}.jpg`,refPhotos[i]))}
     await dbInsert("quote_requests",{id,name:$("cName").value||c.name,email:c.email,phone:$("cPhone").value||c.phone,zip:c.zip,city:$("cCity").value,best_time:$("cTime").value,
       quote_total:Math.round(q.total),rooms:S.rooms.filter(r=>roomArea(r)>0).map(r=>({name:r.name,sf:Math.round(roomArea(r)),floor:P(r.floor).name+" "+P(r.floor).color,cat:P(r.floor).cat,existing:r.existing,doors:r.doors})),
-      extras:{trim:S.trim,prep:S.prep,furn:S.furn,steps:S.steps||0,stairType:stairKind(),toilets:S.toilets,sub:S.sub,nosings:S.nosings||0,doorTrim:S.doorTrim||0,appliances:S.appliances||0},summary:$("summary").value,interests:interests(),video_paths:paths});
+      extras:{trim:S.trim,prep:S.prep,furn:S.furn,steps:S.hasStairs==="yes"?(S.steps||0):0,stairType:stairKind(),toilets:S.toilets,sub:S.sub,nosings:S.nosings||0,doorTrim:S.doorTrim||0,appliances:S.appliances||0},summary:$("summary").value,interests:interests(),video_paths:paths});
     track("request","sent");$("sentMsg").innerHTML="<b>✓ Sent!</b> We got your request and will call you to confirm your price. A copy is below.";$("vidShare").hidden=true;toast("Request sent")}
   catch(e){$("sentMsg").innerHTML="We couldn't send it automatically. Copy this and text it to <b>(818) 203-1168</b>.";btn.disabled=false}}
 document.querySelectorAll(".zcopy").forEach(b=>b.onclick=()=>{const t="gomezflooringcompany@gmail.com";if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Zelle email copied"),()=>toast(t));else toast(t)});
@@ -852,6 +853,7 @@ let srchT;$("search").addEventListener("input",()=>{shown=24;renderCatalog();cle
 $("sort").addEventListener("change",()=>{shown=24;renderCatalog()});
 $("more").onclick=()=>{shown+=24;renderCatalog()};
 function boot(){
+  if(!S.hasStairs)S.hasStairs=(+S.steps||0)>0?"yes":"no";
   if(!CATS.some(c=>c[0]===S.cat))S.cat="lvp";
   if(CATALOG.length){
     // replace sample floors from older saved data with real ones
