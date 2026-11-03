@@ -450,9 +450,11 @@ const DEFAULT = {view:"floors",chosen:"lvp20",cat:"lvp",example:true,picked:[],
          {name:"Bedroom",lf:12,li:0,wf:11,li2:0,ef:0,ei:0,xf:0,xi:0,floor:"carpetgray",existing:"carpet",doors:1}],
   trim:"quarter",furn:"yes",steps:0,stairType:"carpet",toilets:0,vizRoom:0,sub:"concrete",pattern:"standard",pad:"unsure",nosings:0,doorTrim:0,appliances:0};
 let S;
-try{S=JSON.parse(localStorage.getItem("gfcq")||"null")}catch(e){S=null}
+/* Each new visit starts fresh at step 1. Progress only survives a reload in the same tab (sessionStorage). */
+try{localStorage.removeItem("gfcq")}catch(e){}
+try{S=JSON.parse(sessionStorage.getItem("gfcq")||"null")}catch(e){S=null}
 if(!S||!S.rooms) S=JSON.parse(JSON.stringify(DEFAULT));
-const save=()=>{try{localStorage.setItem("gfcq",JSON.stringify(S))}catch(e){}};
+const save=()=>{try{sessionStorage.setItem("gfcq",JSON.stringify(S))}catch(e){}};
 const $=id=>document.getElementById(id);
 const money=n=>"$"+Math.round(n).toLocaleString("en-US");
 const money2=n=>"$"+n.toFixed(2);
