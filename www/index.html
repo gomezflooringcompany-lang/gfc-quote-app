@@ -214,7 +214,8 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
       <span class="note">These add the rest of the costs (removal, trim, stairs and so on) to your quote. Not sure? Pick "not sure" and we confirm from your photos.</span>
       <div class="two">
         <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
-        <label>Floor underneath, any problems?<select id="prep"><option value="ok">Flat and in good shape</option><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option><option value="unsure">Not sure</option></select></label>
+        <label>Any cracks, bumps or dips in the floor underneath?<select id="prepYN"><option value="no">No, it's flat</option><option value="yes">Yes</option><option value="unsure">Not sure</option></select></label>
+        <label id="prepRow">What kind?<select id="prep"><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option></select></label>
         <label>Baseboards and trim<select id="trim"><option value="quarter">Add new quarter round</option><option value="reinstall">Take off my baseboards and put them back</option><option value="baseboard">Replace with new baseboards</option><option value="none">Nothing, leave as is</option></select></label>
         <label>Move furniture for you?<select id="furn"><option value="yes">Yes, please ($125 per room)</option><option value="no">No, rooms will be empty</option></select></label>
         <label>Any stairs getting new floor?<select id="hasStairs"><option value="no">No</option><option value="yes">Yes</option></select></label>
@@ -222,9 +223,12 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <div id="stairPhotoRow" style="display:grid;gap:6px"><span class="note">Please add a photo of your stairs, taken from the bottom so we can see the sides. We use it to confirm your stair price.</span>
           <label class="btn small" style="justify-self:start;cursor:pointer">📷 Add a photo of the stairs<input id="stairIn" type="file" accept="image/*" capture="environment" multiple hidden></label>
           <span class="note" id="stairList">No stair photo yet.</span></div>
-        <label>Doors to trim so they clear the new floor<input id="doorTrim" type="number" min="0" max="30" value="0" inputmode="numeric"></label>
-        <label>Toilets to pull and reset<input id="toilets" type="number" min="0" max="6" value="0" inputmode="numeric"></label>
-        <label>Appliances to pull and reset (fridge, stove, washer)<input id="appliances" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
+        <label>Any doors that need trimming so they clear the new floor?<select id="yn_doorTrim"><option value="no">No</option><option value="yes">Yes</option></select></label>
+        <label id="row_doorTrim">How many doors?<input id="doorTrim" type="number" min="0" max="30" value="0" inputmode="numeric"></label>
+        <label>Any toilets in the rooms?<select id="yn_toilets"><option value="no">No</option><option value="yes">Yes</option></select></label>
+        <label id="row_toilets">How many toilets?<input id="toilets" type="number" min="0" max="6" value="0" inputmode="numeric"></label>
+        <label>Any appliances to move (fridge, stove, washer)?<select id="yn_appliances"><option value="no">No</option><option value="yes">Yes</option></select></label>
+        <label id="row_appliances">How many appliances?<input id="appliances" type="number" min="0" max="10" value="0" inputmode="numeric"></label>
       </div>
   </section>
 
@@ -632,9 +636,11 @@ function renderHow(){const cats=[...new Set(S.rooms.filter(r=>roomArea(r)>0).map
     cats.map(c=>`<div>${cats.length>1?`<b>${HOWNAME[c]}</b>`:""}<ol>${HOW[c].map(x=>`<li>${x}</li>`).join("")}</ol></div>`).join("")}
 const r50=n=>Math.round(n/50)*50;
 function extrasUI(){
-  $("trim").value=S.trim;$("prep").value=S.prep||"ok";$("furn").value=S.furn;$("steps").value=S.steps||0;$("toilets").value=S.toilets;
+  $("trim").value=S.trim;$("furn").value=S.furn;$("steps").value=S.steps||0;$("toilets").value=S.toilets;
   $("sub").value=S.sub||"concrete";$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
   {const cats=new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat));
+   ["doorTrim","toilets","appliances"].forEach(k=>{const y=(+S[k]||0)>0;$("yn_"+k).value=y?"yes":"no";$("row_"+k).hidden=!y});
+   {const pr=S.prep||"ok";$("prepYN").value=pr==="ok"?"no":pr==="unsure"?"unsure":"yes";$("prepRow").hidden=!(pr==="fix"||pr==="level");if(pr==="fix"||pr==="level")$("prep").value=pr}
    const hs=S.hasStairs==="yes";$("hasStairs").value=hs?"yes":"no";$("stepsRow").hidden=!hs;$("stairPhotoRow").hidden=!hs}
 }
 function renderQuote(){
@@ -697,6 +703,9 @@ const videos=[];const refPhotos=[];let stairN=0;
 function refUI(){const on=S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="refinish");$("refPanel").hidden=!on;$("stainNote").hidden=$("stains").value!=="yes";
   $("refList").textContent=refPhotos.length?`✓ ${refPhotos.length} photo${refPhotos.length>1?"s":""} ready. We'll ask you to send them with your request.`:"No photos yet. Tip: one close-up from about 1 foot away, and one of each stain.";
   $("vidShare").hidden=!(videos.length+refPhotos.length)}
+["doorTrim","toilets","appliances"].forEach(k=>$("yn_"+k).addEventListener("change",()=>{S[k]=$("yn_"+k).value==="yes"?Math.max(1,+S[k]||0):0;save();extrasUI();renderQuote()}));
+$("prepYN").addEventListener("change",()=>{const v=$("prepYN").value;S.prep=v==="no"?"ok":v==="unsure"?"unsure":(S.prep==="level"?"level":"fix");save();extrasUI();renderQuote()});
+$("hasStairs").addEventListener("change",()=>{extrasUI();renderQuote()});
 $("stairIn").addEventListener("change",e=>{for(const f of e.target.files){refPhotos.push(f);stairN++}e.target.value="";track("stairphoto",stairN);$("stairList").textContent=`✓ ${stairN} stair photo${stairN>1?"s":""} ready. We'll ask you to send it with your request.`;refUI()});
 $("refIn").addEventListener("change",e=>{for(const f of e.target.files)refPhotos.push(f);e.target.value="";track("refphoto",refPhotos.length);refUI()});
 $("stains").addEventListener("change",()=>{S.stains=$("stains").value;save();refUI()});
