@@ -1,1 +1,1 @@
-{%- if customer -%}<script>window.GFC_PRIVATE={customer:{name:{{ customer.name | json }},email:{{ customer.email | json }},phone:{{ customer.phone | json }}},prices:{{ shop.metafields.gfc.private_prices.value | json }}};</script>{%- endif -%}
+{%- if customer and page.handle == 'gfc-instant-quote' -%}<script>window.GFC_PRIVATE={customer:{name:{{ customer.name | json }},email:{{ customer.email | json }},phone:{{ customer.phone | json }}},prices:{{ shop.metafields.gfc.private_prices.value | json }}};</script>{%- endif -%}
