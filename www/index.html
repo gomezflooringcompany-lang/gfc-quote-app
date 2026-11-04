@@ -638,7 +638,7 @@ function calc(){
     const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const pp=privPrice(p),unit=pp||p.price;const m=buy*unit;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
     if(p.service) add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft refinished at ${money2(lr.rate)}/sq ft. Stain, sealer and finish included`,m,l);
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
-      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":""}`,m,0);
+      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}${(p.cat==="lvp"||p.cat==="laminate")&&S.sub!=="wood"?". Plastic moisture film over concrete included":""}`,0,l);
       if((p.cat==="lvp"||p.cat==="laminate")&&p.pad!==1){add(`Foam underlayment: ${a.toFixed(0)} sq ft`,`${money2(RATES.underlayFoam)}/sq ft installed. ${p.pad===0?"This floor has no pad attached, so it needs underlayment":"We couldn't confirm a pad on this floor. If it has one attached, we take this off"}`,0,a*RATES.underlayFoam)}}
     const ex=REMOVAL[r.existing];
@@ -701,7 +701,7 @@ function renderPriv(){const el=$("privPanel");if(!el)return;const g=getPriv();S.
     <button class="btn primary" type="button" id="pGo" style="justify-self:start">Show my private price</button>`;
     $("pGo").onclick=()=>{const a=$("pAddr").value.trim(),y=$("pPay").value;if(a.length<8||!y||!S.rooms.some(r=>roomArea(r)>0)){$("pErr").hidden=false;return}
       S.priv={addr:a,pay:y,at:new Date().toISOString().slice(0,10)};track("private","on");save();renderQuote()};return}
-  el.innerHTML=`<b>Private quote${nm?" for "+esc(nm):""}</b><span class="note">Material is at your private Gomez Flooring price for this project (${esc(S.priv.addr)}, paying by ${esc(S.priv.pay)}). This price is only for you, good for 14 days. Please don't post or share it.</span><button class="btn small" type="button" id="pEdit" style="justify-self:start">Change address or payment</button>`;
+  el.innerHTML=`<b>Private quote${nm?" for "+esc(nm):""}</b><span class="note">Material is at your private Gomez Flooring price where we have one for this project (${esc(S.priv.addr)}, paying by ${esc(S.priv.pay)}). This price is only for you, good for 14 days. Please don't post or share it. Floors marked "Ask us" show the regular price here. Send us this quote and we'll reply with your private price on those.</span><button class="btn small" type="button" id="pEdit" style="justify-self:start">Change address or payment</button>`;
   $("pEdit").onclick=()=>{S.priv={addr:S.priv.addr,pay:""};save();renderQuote()}}
 function renderQuote(){
   renderPriv();
