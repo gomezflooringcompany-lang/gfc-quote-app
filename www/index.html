@@ -746,7 +746,7 @@ async function dbUpload(path,file){const r=await fetch(DB.url+"/storage/v1/objec
 // ---------- OWNER ALERTS (internal, never shown to customers) ----------
 // Sends app activity, sign-ups, quote and sample requests to the owner's private Google Sheet,
 // which emails the owner and powers the live-feed dashboard. Setup: backchannel/README.md. Empty url = off.
-var FEED={url:"",key:"gfc-iq"};
+var FEED={url:"https://script.google.com/macros/s/AKfycbzg_P-7Vi9M0sAjEnJ2D2qz_ZwglduiCWKZmb2JMGUHB-Bx448zchnTHTERTgBlHRmyHw/exec",key:"gfc-iq"};
 var feedQ=[],feedT=null,feedSid=uid(),feedLast={};
 try{const q=((window.parent!==window?window.parent.location.search:location.search)||"").match(/gfcstaff=([01])/);if(q){if(q[1]==="1")localStorage.setItem("gfc_staff","1");else localStorage.removeItem("gfc_staff")}}catch(e){}
 function feedOn(){if(!FEED||!FEED.url)return false;try{return localStorage.getItem("gfc_staff")!=="1"}catch(e){return true}}
