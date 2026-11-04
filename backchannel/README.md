@@ -1,8 +1,11 @@
 # Owner back channel (private)
 
 Sends every Instant Quote **quote request, sample request and sign-up** to the owner by email, and shows a
-**live feed** of who is using the app right now. Customers never see any of it: the app's screens and
-messages are unchanged (they still copy/text their quote as before).
+**live feed** of who is using the app right now. Customers never see the feed or the alerts.
+
+When `FEED.url` is set, "Request my visit" and "Order my samples" send the request straight to the office and
+the customer just sees "✓ Sent!" (no more copy-and-text step). If sending fails, the old copy/call/text
+fallback appears so no request is lost.
 
 How it works:
 

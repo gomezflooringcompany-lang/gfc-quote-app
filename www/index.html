@@ -724,7 +724,10 @@ $("sampleBtn").onclick=()=>{
   const list=(S.samples||[]).map(P);
   $("sampleSummary").value=`Sample request, $25 (app)\nName: ${$("sName").value||"-"}\nPhone: ${$("sPhone").value||"-"}\nMail to: ${$("sAddr").value||"-"}\n\nSamples:\n`+list.map(p=>`- ${p.name}, ${p.color} (${p.kind})`).join("\n");
   $("sampleSent").hidden=false;
-  feedOnce("sample",$("sampleSummary").value,{sample:{name:$("sName").value,phone:$("sPhone").value,address:$("sAddr").value,summary:$("sampleSummary").value}});
+  if(FEED.url&&!dbOn()){const box=$("sampleSent");officeUI(box,true);$("sampleMsg").textContent="Sending your request...";
+    feedDeliver("sample",$("sampleSummary").value,{sample:{name:$("sName").value,phone:$("sPhone").value,address:$("sAddr").value,summary:$("sampleSummary").value}}).then(ok=>{
+      if(ok)$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples.";
+      else{officeUI(box,false);$("sampleMsg").innerHTML="We couldn't send it automatically. Please call or text <b>(818) 203-1168</b>, or copy this and send it to us."}})}
   if(dbOn())dbInsert("sample_requests",{name:$("sName").value,phone:$("sPhone").value,address:$("sAddr").value,samples:list.map(p=>({id:p.id,name:p.name,color:p.color})),summary:$("sampleSummary").value})
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
@@ -752,8 +755,16 @@ function feedWho(){const c=S.contact,g=getPriv(),gc=g&&g.customer;
   if(c)return{name:c.name,email:c.email,phone:c.phone,zip:c.zip||S.zip||""};
   if(gc&&gc.email)return{name:gc.name||"",email:gc.email,phone:gc.phone||"",zip:S.zip||"",login:1};
   return{zip:S.zip||""}}
-function feedSend(kind,extra,beacon){if(!feedOn())return;clearTimeout(feedT);feedT=null;
-  const body=JSON.stringify({k:FEED.key,kind,vid:feedVid(),sid:feedSid,src:window.parent!==window?"web":"app",who:feedWho(),ev:feedQ.splice(0),...(extra||{})});
+function feedBody(kind,extra){clearTimeout(feedT);feedT=null;
+  return JSON.stringify({k:FEED.key,kind,vid:feedVid(),sid:feedSid,src:window.parent!==window?"web":"app",who:feedWho(),ev:feedQ.splice(0),...(extra||{})})}
+// Quote and sample requests go to the office directly; resolves true only when the office copy is saved.
+// (Not skipped by gfcstaff, so the owner can still send himself a test quote.)
+async function feedDeliver(kind,text,extra){if(!FEED||!FEED.url)return false;if(feedLast[kind]===text)return true;
+  for(let i=0;i<2;i++){try{const r=await fetch(FEED.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:feedBody(kind,extra)});
+    if(r.ok&&(await r.text()).trim()==="ok"){feedLast[kind]=text;return true}}catch(e){}}
+  return false}
+function feedSend(kind,extra,beacon){if(!feedOn())return;
+  const body=feedBody(kind,extra);
   try{if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(FEED.url,new Blob([body],{type:"text/plain"})))return;
     fetch(FEED.url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body,keepalive:body.length<60000}).catch(()=>{})}catch(e){}}
 function feedName(d){if(typeof d!=="string")return d;const m=/^([^~|]+)~(\d+)$/.exec(d),x=m&&BYH[m[1]];if(!x)return d;const k=(x.k||[])[+m[2]];return (x.v?x.v+" ":"")+x.t+(k?", "+k[0]:"")}
@@ -806,10 +817,18 @@ $("sendBtn").onclick=()=>{
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
   $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\n${privOn()?`Private pricing: YES (logged in as ${(getPriv().customer||{}).email||"-"}), job address: ${S.priv.addr}, payment: ${S.priv.pay}\n`:""}Instant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
-  feedOnce("quote",$("summary").value,{quote:{total:Math.round(q.total),priv:privOn(),city:$("cCity").value,best:$("cTime").value,name:$("cName").value,phone:$("cPhone").value,videos:videos.length,photos:refPhotos.length,summary:$("summary").value}});
-  $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
+  $("sent").hidden=false;
+  if(FEED.url&&!dbOn()){sendToOffice(q);return}
+  $("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
+function officeUI(box,ok){["summary","copyBtn","smsLink","sampleSummary","sampleCopy"].forEach(id=>{const el=$(id);if(el&&box.contains(el))el.hidden=ok})}
+async function sendToOffice(q){const btn=$("sendBtn");btn.disabled=true;$("sentMsg").textContent="Sending your request...";officeUI($("sent"),true);
+  const ok=await feedDeliver("quote",$("summary").value,{quote:{total:Math.round(q.total),priv:privOn(),city:$("cCity").value,best:$("cTime").value,name:$("cName").value,phone:$("cPhone").value,videos:videos.length,photos:refPhotos.length,summary:$("summary").value}});
+  btn.disabled=false;
+  if(ok){track("request","sent");$("sentMsg").innerHTML="<b>✓ Sent!</b> We got your request and will call you to confirm your price."+(videos.length+refPhotos.length?" Tap below to send us your videos and photos.":"");toast("Request sent")}
+  else{officeUI($("sent"),false);$("sentMsg").innerHTML="We couldn't send it automatically. Please call or text <b>(818) 203-1168</b>, or copy this and send it to us."}
+  $("sent").scrollIntoView({behavior:"smooth",block:"center"})}
 async function sendOnline(q){const id=uid(),c=S.contact||{};const btn=$("sendBtn");btn.disabled=true;
   $("sentMsg").textContent="Sending your request...";
   try{const paths=[];for(let i=0;i<videos.length;i++){$("sentMsg").textContent=`Uploading video ${i+1} of ${videos.length}... keep the app open.`;
