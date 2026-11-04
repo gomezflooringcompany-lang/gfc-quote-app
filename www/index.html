@@ -302,6 +302,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     </div>
     </div>
     <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping not included)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
+    <div class="panel" id="privPanel" style="display:grid;gap:10px"></div>
     <div class="panel upd" id="updPanel">
       <b>Update my quote</b>
       <span class="note">Change anything and your price updates right away.</span>
@@ -408,6 +409,14 @@ const CATINFO={lvp:{kind:"Waterproof vinyl plank",labor:"lvp_click",waste:.10,te
   carpet:{kind:"Carpet",labor:"carpet_stretch",waste:.10,tex:{type:"carpet",base:[186,176,160]}},
   tile:{kind:"Tile",labor:"tile",waste:.15,tex:{type:"tile",base:[190,185,178],tw:24,th:12}}};
 let CATALOG=[], BYH={};
+// ---------- PRIVATE PRICING (MAP-safe) ----------
+// The website page adds window.GFC_PRIVATE only for logged-in customers (Shopify Liquid).
+// Private prices are used only after the customer gives a job address, payment type and room sizes,
+// so the quote is a private quote to a qualified buyer. Everyone else sees advertised (MAP) prices.
+const LOGIN_URL="https://gomezflooringcompany.store/customer_authentication/login?return_to=%2Fpages%2Fgfc-instant-quote";
+function getPriv(){try{const g=window.parent&&window.parent!==window?window.parent.GFC_PRIVATE:null;return g&&g.prices?g:null}catch(e){return null}}
+function privOn(){return !!(getPriv()&&S.priv&&S.priv.addr&&S.priv.pay&&S.rooms.some(r=>roomArea(r)>0))}
+function privPrice(p){if(!p||!p.h||p.service||!privOn())return null;const v=+getPriv().prices[p.h];return v>0&&v<p.price?v:null}
 const imgUrl=(path,w)=>path?IMGBASE+path+"?width="+w:"";
 const titleCase=s=>s?s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):"";
 const avgCache={};
@@ -626,10 +635,10 @@ function calc(){
   let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
-    const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const m=buy*p.price;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
+    const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const pp=privPrice(p),unit=pp||p.price;const m=buy*unit;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
     if(p.service) add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft refinished at ${money2(lr.rate)}/sq ft. Stain, sealer and finish included`,m,l);
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
-      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(p.price)}/sq ft`,m,0);
+      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}${(p.cat==="lvp"||p.cat==="laminate")&&S.sub!=="wood"?". Plastic moisture film over concrete included":""}`,0,l);
       if((p.cat==="lvp"||p.cat==="laminate")&&p.pad!==1){add(`Foam underlayment: ${a.toFixed(0)} sq ft`,`${money2(RATES.underlayFoam)}/sq ft installed. ${p.pad===0?"This floor has no pad attached, so it needs underlayment":"We couldn't confirm a pad on this floor. If it has one attached, we take this off"}`,0,a*RATES.underlayFoam)}}
     const ex=REMOVAL[r.existing];
@@ -682,7 +691,20 @@ function extrasUI(){
    {const pr=S.prep||"ok";$("prepYN").value=pr==="ok"?"no":pr==="unsure"?"unsure":"yes";$("prepRow").hidden=!(pr==="fix"||pr==="level");if(pr==="fix"||pr==="level")$("prep").value=pr}
    zipUI();const hs=S.hasStairs==="yes";$("hasStairs").value=hs?"yes":"no";$("stepsRow").hidden=!hs;$("stairPhotoRow").hidden=!hs}
 }
+function renderPriv(){const el=$("privPanel");if(!el)return;const g=getPriv();S.priv=S.priv||{};
+  if(!g){el.innerHTML=`<b>Get your private project price</b><span class="note">Floor prices shown are the manufacturer's advertised prices. Create a free account or log in, then add your job details for your private Gomez Flooring project quote.</span><a class="btn primary" style="justify-self:start" href="${LOGIN_URL}" target="_top" rel="noopener">Log in or create a free account</a>`;return}
+  const nm=(g.customer&&g.customer.name)||"";
+  if(!privOn()){el.innerHTML=`<b>${nm?"Hi "+esc(nm)+", one":"One"} more step for your private price</b><span class="note">Add the job address and how you'll pay. Your private project quote then shows right here, for this project only.</span>
+    <label>Job address (street, city, ZIP)<input id="pAddr" autocomplete="street-address" value="${esc(S.priv.addr||"")}"></label>
+    <label>How will you pay?<select id="pPay"><option value="">Choose one</option>${["Zelle","Wire / cashier's check","Pay at showroom"].map(o=>`<option${S.priv.pay===o?" selected":""}>${o}</option>`).join("")}</select></label>
+    <span class="note" id="pErr" style="color:#B42318" hidden>Please add the job address, how you'll pay, and at least one room size.</span>
+    <button class="btn primary" type="button" id="pGo" style="justify-self:start">Show my private price</button>`;
+    $("pGo").onclick=()=>{const a=$("pAddr").value.trim(),y=$("pPay").value;if(a.length<8||!y||!S.rooms.some(r=>roomArea(r)>0)){$("pErr").hidden=false;return}
+      S.priv={addr:a,pay:y,at:new Date().toISOString().slice(0,10)};track("private","on");save();renderQuote()};return}
+  el.innerHTML=`<b>Private quote${nm?" for "+esc(nm):""}</b><span class="note">Material is at your private Gomez Flooring price for this project (${esc(S.priv.addr)}, paying by ${esc(S.priv.pay)}). This price is only for you, good for 14 days. Please don't post or share it.</span><button class="btn small" type="button" id="pEdit" style="justify-self:start">Change address or payment</button>`;
+  $("pEdit").onclick=()=>{S.priv={addr:S.priv.addr,pay:""};save();renderQuote()}}
 function renderQuote(){
+  renderPriv();
   extrasUI();
   const q=calc();
   $("qTotal").textContent=money(q.total);
@@ -726,7 +748,7 @@ function interests(){const a=S.activity||[];const cnt={};const fl={};
   const srch=[...new Set(a.filter(x=>x.e==="search").map(x=>x.d))].slice(-5).join(", ")||"-";
   return `Interested in: ${top(cnt)}\nFloors looked at most: ${top(fl)}\nSearched: ${srch}`}
 function contactText(){const c=S.contact||{};return `Email: ${c.email||"-"}\nZIP: ${c.zip||"-"}\nPromo emails OK: ${c.mailOk?"YES "+c.when:"no"}\nPromo texts OK: ${c.textOk?"YES "+c.when:"no"}`}
-function gateUI(){const lock=!S.contact;$("v-quote").classList.toggle("locked",lock);
+function gateUI(){{const g=getPriv(),c=g&&g.customer;if(c&&!S.contact){if(!$("gName").value&&c.name)$("gName").value=c.name;if(!$("gEmail").value&&c.email)$("gEmail").value=c.email;if(!$("gPhone").value&&c.phone)$("gPhone").value=c.phone}}const lock=!S.contact;$("v-quote").classList.toggle("locked",lock);
   if(S.contact){if(!$("cName").value)$("cName").value=S.contact.name||"";if(!$("cPhone").value)$("cPhone").value=S.contact.phone||""}}
 $("gate").addEventListener("submit",e=>{e.preventDefault();
   const name=$("gName").value.trim(),email=$("gEmail").value.trim();
@@ -761,7 +783,7 @@ $("sendBtn").onclick=()=>{
   if(!$("refPanel").hidden&&$("stains").value==="yes"&&!refPhotos.length){toast("Please add a photo of each stain first");$("refPanel").scrollIntoView({behavior:"smooth"});return}
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
-  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\nInstant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
+  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\n${privOn()?`Private pricing: YES (logged in as ${(getPriv().customer||{}).email||"-"}), job address: ${S.priv.addr}, payment: ${S.priv.pay}\n`:""}Instant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
   $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
@@ -772,7 +794,7 @@ async function sendOnline(q){const id=uid(),c=S.contact||{};const btn=$("sendBtn
     for(let i=0;i<refPhotos.length;i++){$("sentMsg").textContent=`Uploading photo ${i+1} of ${refPhotos.length}...`;paths.push(await dbUpload(`${id}/floor-${i+1}.jpg`,refPhotos[i]))}
     await dbInsert("quote_requests",{id,name:$("cName").value||c.name,email:c.email,phone:$("cPhone").value||c.phone,zip:c.zip,city:$("cCity").value,best_time:$("cTime").value,
       quote_total:Math.round(q.total),rooms:S.rooms.filter(r=>roomArea(r)>0).map(r=>({name:r.name,sf:Math.round(roomArea(r)),floor:P(r.floor).name+" "+P(r.floor).color,cat:P(r.floor).cat,existing:r.existing,doors:r.doors})),
-      extras:{trim:S.trim,prep:S.prep,furn:S.furn,steps:S.hasStairs==="yes"?(S.steps||0):0,stairType:stairKind(),toilets:S.toilets,sub:S.sub,nosings:S.nosings||0,doorTrim:S.doorTrim||0,appliances:S.appliances||0},summary:$("summary").value,interests:interests(),video_paths:paths});
+      extras:{priv:privOn()?{addr:S.priv.addr,pay:S.priv.pay,email:(getPriv().customer||{}).email||""}:null,trim:S.trim,prep:S.prep,furn:S.furn,steps:S.hasStairs==="yes"?(S.steps||0):0,stairType:stairKind(),toilets:S.toilets,sub:S.sub,nosings:S.nosings||0,doorTrim:S.doorTrim||0,appliances:S.appliances||0},summary:$("summary").value,interests:interests(),video_paths:paths});
     track("request","sent");$("sentMsg").innerHTML="<b>✓ Sent!</b> We got your request and will call you to confirm your price. A copy is below.";$("vidShare").hidden=true;toast("Request sent")}
   catch(e){$("sentMsg").innerHTML="We couldn't send it automatically. Copy this and text it to <b>(818) 203-1168</b>.";btn.disabled=false}}
 document.querySelectorAll(".zcopy").forEach(b=>b.onclick=()=>{const t="gomezflooringcompany@gmail.com";if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Zelle email copied"),()=>toast(t));else toast(t)});
