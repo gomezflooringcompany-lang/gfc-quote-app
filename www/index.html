@@ -41,7 +41,7 @@ h1,h2,h3{font-family:var(--display);letter-spacing:.01em;text-wrap:balance;margi
 .topbar .tag{font-size:12px;opacity:.8}
 .topbar .test{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.5);border-radius:4px;padding:2px 6px}
 main{max-width:760px;margin:0 auto;padding-block:16px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.view{display:grid;gap:16px}
+.view{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}.view>*{min-width:0}
 .back{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:16px;padding:6px 0;margin:0 0 6px;cursor:pointer;display:block}
 .step{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700}
 .lead{color:var(--muted);margin:4px 0 0}
@@ -124,6 +124,7 @@ details.tut[open] summary::after{content:"–"}
 table.q{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 table.q td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 table.q td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+table.q tr.rhead td{white-space:normal;padding-left:0}
 table.q .sub{font-size:13px;color:var(--muted)}
 table.q tr.adj td{color:var(--accent)}
 .total{background:var(--navy);color:#fff;border-radius:10px;padding:18px 16px;display:grid;gap:4px}
@@ -219,11 +220,11 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <span class="note" id="zipNote"></span>
         <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
         <label id="floor2Row" hidden>Is your wood floor going on a second floor (upstairs)?<select id="floor2"><option value="no">No, first floor</option><option value="yes">Yes, second floor</option></select></label>
-        <label id="corkRow" hidden>Add cork sound underlayment? Recommended on second floors: it quiets footsteps for the room below<select id="cork"><option value="no">No cork</option><option value="c3">Yes, 3mm cork (Hush III)</option><option value="c6">Yes, 6mm cork (most sound control)</option></select></label>
+        <label id="corkRow" hidden>Add cork underlayment for sound reduction? Recommended on second floors, but optional: it reduces (does not eliminate) footstep noise for the room below<select id="cork"><option value="no">No cork (optional)</option><option value="c3">Yes, 3mm cork, Hush III (recommended)</option><option value="c6">Yes, 6mm cork (most sound reduction)</option></select></label>
         <label id="padRow" hidden>Carpet pad (you need new pad under new carpet)<select id="pad"></select></label>
-        <label id="polyRow" hidden>Moisture barrier for your waterproof vinyl over concrete (poly film)<select id="uPoly"><option value="mohawk">Mohawk MoistureBarrier poly film (recommended)</option><option value="shaw">Shaw TotalWorx 6 mil poly film</option></select></label>
+        <label id="polyRow" hidden>Moisture barrier for your waterproof vinyl (poly film)<select id="uPoly"><option value="mohawk">Mohawk MoistureBarrier poly film (recommended)</option><option value="shaw">Shaw TotalWorx 6 mil poly film</option></select></label>
         <label id="lamRow" hidden>Underlayment for your laminate (foam)<select id="uLam"><option value="mohawk">Mohawk Platinum 3mm performance foam (recommended)</option><option value="shaw">Shaw TotalWorx Silent Step Ultra foam</option></select></label>
-        <label id="glueRow" hidden>Adhesive for your glued-down wood floor<select id="uGlue"><option value="s35">Shaw TotalWorx 35 MC, with moisture control (recommended)</option><option value="sure">Shaw TotalWorx Urebond Enhanced</option><option value="mohawk">Mohawk TimberStrong</option></select></label>
+        <label id="glueRow" hidden>Adhesive for your glued-down wood floor (sold by the bucket, 4 gallons)<select id="uGlue"><option value="s35">Shaw 35 MC with moisture control, $217.49 per bucket (recommended)</option><option value="sure">Shaw Urebond Enhanced, $164.99 per bucket</option><option value="mohawk">Mohawk TimberStrong, $194.49 per bucket</option></select><span class="note" id="glueNote"></span></label>
         <label>Any cracks, bumps or dips in the floor underneath?<select id="prepYN"><option value="no">No, it's flat</option><option value="yes">Yes</option><option value="unsure">Not sure</option></select></label>
         <label id="prepRow">What kind?<select id="prep"><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option></select></label>
         <label>Baseboards and trim<select id="trim"><option value="quarter">Keep my baseboards, add new quarter round</option><option value="baseboard">Remove my baseboards and install new ones</option></select></label>
@@ -337,7 +338,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     </form>
     </div>
     </div>
-    <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping not included)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
+    <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping not included)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span><span class="rng" id="qWorst" hidden></span></div>
     <div class="panel" id="privPanel" style="display:grid;gap:10px"></div>
     <div class="panel upd" id="updPanel">
       <b>Update my quote</b>
@@ -440,7 +441,7 @@ const CORK={c6:{name:"Cork 6mm underlayment",roll:200,price:214.49},c3:{name:"Hu
 const ACC={
   mohawk:{label:"Mohawk",poly:[{name:"Mohawk MoistureBarrier 6 mil poly, 400 sq ft roll",sf:400,price:68.04},{name:"Mohawk MoistureBarrier 6 mil poly, 100 sq ft roll",sf:100,price:17.82}],
     lam:{name:"Mohawk Platinum 3mm underlayment",sf:100,price:55.59},trans:{lvp:{name:"Mohawk vinyl 4-in-1 molding",price:74.28},laminate:{name:"Mohawk 4-in-1 molding",price:74.28},wood:{name:"Mohawk wood 4-in-1 molding",price:90.44}},glue:{name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:140,price:194.49}},
-  shaw:{label:"Shaw",poly:[{name:"Shaw TotalWorx 6 mil poly moisture barrier, 100 sq ft roll",sf:100,price:16.49}],
+  shaw:{label:"Shaw",poly:[{name:"Shaw TotalWorx 6 mil poly jumbo moisture barrier, 400 sq ft roll",sf:400,price:65.99},{name:"Shaw TotalWorx 6 mil poly moisture barrier, 100 sq ft roll",sf:100,price:16.49}],
     lam:{name:"Shaw TotalWorx Silent Step Ultra underlayment",sf:100,price:44.99},trans:{lvp:{name:"Shaw TotalWorx T-molding",price:64.09},laminate:{name:"Shaw TotalWorx T-molding",price:64.09},wood:{name:"Shaw TotalWorx T-molding",price:64.09}},glue:{name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:140,price:164.99}}};
 // Carpet pad, priced per sq ft (store prices). Shaw = TotalWorx store prices; Mohawk = Georgia Carpet price minus 3 cents (no Xchange cost yet).
 const PADS=[
@@ -455,10 +456,14 @@ const PADS=[
  {id:"svict",brand:"Shaw",name:"Shaw TotalWorx Victorious Plus, premium",price:1.21}];
 function padSel(){return PADS.find(x=>x.id===S.cpad)||PADS[0]}
 function accBrand(){return ACC[S.acc]||ACC.mohawk}
-// Wood adhesive (Shaw first, per Luis). Coverage = moisture-control spread with the clip-on trowel.
-const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",sf:140,price:217.49},
- sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:140,price:164.99},
- mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:140,price:194.49}};
+// Wood adhesive (Shaw first, per Luis). sf = sq ft per 4 gal pail for the wood layer.
+// 35 MC spec (Shaw TotalWorx): up to 30 sq ft/gal for engineered wood over 3/8 in thick with the
+// clip-on moisture-control trowel (36 for 3/8 in and thinner); up to 60 sq ft/gal as adhesive only.
+// We plan at 30/gal = 120/pail so customers don't run short. Cork layer is bonded at the
+// adhesive-only rate (60/gal = 240/pail). Urebond / TimberStrong: no published rate found, same plan used.
+const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",sf:120,corkSf:240,price:217.49},
+ sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:120,corkSf:240,price:164.99},
+ mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:120,corkSf:240,price:194.49}};
 function glueSel(){return GLUES[S.uGlue2]||GLUES.s35}
 function uB(k){return ACC[S[k]]||ACC.mohawk}
 function polyRolls(sf){const ps=uB("uPoly").poly;if(ps.length<2){const n=Math.ceil(sf/ps[0].sf);return {txt:`${n} roll${n>1?"s":""} of ${ps[0].name}`,cost:n*ps[0].price}}
@@ -759,13 +764,17 @@ function corkOn(){return S.floor2==="yes"&&!!S.cork&&S.cork!=="no"&&!!CORK[S.cor
 function laborKey(p){const pat=p.pattern||"standard";
   if(p.cat==="lvp")return pat==="standard"?p.labor:"herringbone";
   if(p.cat==="laminate")return pat==="standard"?p.labor:"herringbone_laminate";
-  if(p.cat==="wood"){if(pat==="herringbone")return "herringbone_wood";if(pat==="chevron")return "chevron_wood";return corkOn()?"engineered_wood_cork":S.floor2==="yes"?"engineered_wood":"engineered_wood_glue"}
+  if(p.cat==="wood"){if(pat==="herringbone")return "herringbone_wood";if(pat==="chevron")return "chevron_wood";return corkOn()?"engineered_wood_cork":"engineered_wood_glue"}
   if(p.cat==="tile"&&isLargeTile(p))return "tile_large";
   return p.labor}
 // Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
 function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
-const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down (first floor)",engineered_wood:"nailed or floating over wood subfloor"};
-function calc(){
+const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down",engineered_wood:"nailed or floating over wood subfloor"};
+// Self-leveling (Shaw PrepWorx, 2026 TotalWorx guide cost x1.5): VL201 50 lb bag $40.50 covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
+// 9050 primer 4 gal pail $91.49 (store) at 300-350 sq ft/gal (plan 1,200 sq ft per pail). Labor per sq ft leveled.
+const LEVEL={bag:40.50,primer:91.49,primerSf:1200,labor:2.00};
+function levelCost(a,deep){const bags=Math.ceil(a/(deep?25:50)),pr=Math.ceil(a/LEVEL.primerSf);return {bags,pr,mat:bags*LEVEL.bag+pr*LEVEL.primer,lab:a*LEVEL.labor}}
+function calc(o){o=o||{};
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
   let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;const need={poly:0,lam:0,glue:0,cork:0,pad:0};
@@ -776,10 +785,10 @@ function calc(){
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
       add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}`,0,l);
-      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.glue+=a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Quiets footsteps for the floor below`,0,a*RATES.corkGlue)}
+      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.corkGlue=(need.corkGlue||0)+a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Reduces footstep noise for the floor below (reduces, does not eliminate)`,0,a*RATES.corkGlue)}
       if(p.cat==="carpet")need.pad+=buy;
-      if(p.cat==="laminate"&&p.pad!==1)need.lam+=a;
-      if((p.cat==="lvp"||(p.cat==="laminate"&&p.pad===1))&&S.sub!=="wood")need.poly+=a;
+      if(p.cat==="laminate")need.lam+=a;
+      if(p.cat==="lvp")need.poly+=a;
       if(p.cat==="wood"&&/glue|cork|herring|chevron/.test(lk))need.glue+=a;}
     const ex=REMOVAL[r.existing];
     if(ex.rate>0&&p.cat!=="refinish"){const rl=ex.unit==="sy"?a/9*ex.rate:a*ex.rate;add(`Remove old ${ex.label.toLowerCase()}`,r.name,0,rl);anyRemoval=true;removedSf+=a}
@@ -790,8 +799,8 @@ function calc(){
    if(need.pad){const pd=padSel();add(`Carpet pad: ${need.pad} sq ft`,`${pd.name} at ${money2(pd.price)}/sq ft. Same square feet as your carpet; installed with the carpet`,need.pad*pd.price,0)}
    if(need.cork){const ck=CORK[S.cork],n=Math.ceil(need.cork*1.05/ck.roll);add(`Cork underlayment: ${n} roll${n>1?"s":""}`,`${ck.name}, ${ck.roll} sq ft per roll, at ${money2(ck.price)}. For ${need.cork.toFixed(0)} sq ft`,n*ck.price,0)}
    if(need.lam){const u=uB("uLam").lam,n=Math.ceil(need.lam*1.05/u.sf);add(`Foam underlayment: ${n} roll${n>1?"s":""}`,`${u.name}, ${u.sf} sq ft per roll, at ${money2(u.price)}. Recommended for laminate: quieter, softer underfoot, built-in moisture barrier`,n*u.price,0)}
-   if(need.poly){const pr=polyRolls(Math.ceil(need.poly*1.1));add(`Moisture barrier poly film: ${need.poly.toFixed(0)} sq ft`,`Recommended under floating floors over concrete to block slab moisture. ${pr.txt}`,pr.cost,0)}
-   if(need.glue){const g=glueSel(),n=Math.ceil(need.glue/g.sf);add(`Wood flooring adhesive: ${n} pail${n>1?"s":""}`,`${g.name} at ${money2(g.price)}, about ${g.sf} sq ft per pail. For glued-down engineered wood${need.cork?" and the cork underlayment":""}`,n*g.price,0)}}
+   if(need.poly){const pr=polyRolls(Math.ceil(need.poly*1.1));add(`Moisture barrier poly film: ${need.poly.toFixed(0)} sq ft`,`Moisture barrier for waterproof vinyl plank. ${pr.txt}`,pr.cost,0)}
+   if(need.glue){const g=glueSel(),cg=need.corkGlue||0,gal=need.glue/(g.sf/4)+cg/(g.corkSf/4),n=Math.ceil(gal/4);add(`Wood flooring adhesive: ${n} bucket${n>1?"s":""}`,`${g.name.replace(/, 4 gal$/,"")}, 4 gallon bucket at ${money2(g.price)} per bucket. One bucket covers about ${g.sf} sq ft of wood${cg?` (or about ${g.corkSf} sq ft when gluing down cork)`:""}. For ${need.glue.toFixed(0)} sq ft of wood${cg?` plus ${cg.toFixed(0)} sq ft of cork`:""}`,n*g.price,0)}}
   if(S.trim!=="none"&&hardPerim>0){
     if(S.trim==="quarter") add("New quarter round",`${hardPerim.toFixed(0)} ft of wall`,hardPerim*1.1*RATES.quarterMat,hardPerim*RATES.quarter);
     else if(S.trim==="reinstall") add("Remove and reinstall your baseboards",`${hardPerim.toFixed(0)} ft of wall`,0,hardPerim*RATES.baseReinstall);
@@ -799,8 +808,10 @@ function calc(){
   }
   if(anyRemoval)add("Dump fee","We haul away the old floor and all job trash. Flat fee per job",0,RATES.dumpFee);
   const hardSf=S.rooms.reduce((t,r)=>t+(roomArea(r)>0&&P(r.floor).cat!=="carpet"?roomArea(r):0),0);
-  if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
-  if(S.prep==="level"&&totalSf>0){const bags=Math.max(2,Math.ceil((hardSf||totalSf)/100));add(`Floor prep: self-leveler, about ${bags} bags`,`${money(RATES.selfLevelBag)} per 50 lb bag installed, material included. Estimate, we confirm from your photos`,0,bags*RATES.selfLevelBag)}
+  const prepMode=o.worst&&S.prep!=="ok"?"worst":S.prep;
+  if(prepMode==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
+  if((prepMode==="level"||prepMode==="worst")&&totalSf>0){const A=hardSf||totalSf,deep=prepMode==="worst",L=levelCost(A,deep);
+    add(`Floor prep: self-leveler, ${L.bags} bags + ${L.pr} primer bucket${L.pr>1?"s":""}`,`Shaw PrepWorx VL201 self-leveler, 50 lb bag at ${money2(LEVEL.bag)} (covers about ${deep?25:50} sq ft at ${deep?"1/4":"1/8"} in), plus Shaw 9050 primer at ${money2(LEVEL.primer)} per 4 gal bucket. Leveling labor ${money2(LEVEL.labor)}/sq ft for ${A.toFixed(0)} sq ft. Estimate, we confirm from your photos`,L.mat,L.lab)}
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
   const st=S.hasStairs==="yes"?Math.max(0,Math.min(60,Math.round(+S.steps||0))):0;
   const stT=stairKind();if(st>0){if(stT==="carpet"){add(`Carpet stairs: ${st} step${st>1?"s":""}`,`${money(RATES.stepCarpet)} per step plus carpet and pad. We confirm from your stair photo`,st*RATES.stepMatCarpet,st*RATES.stepCarpet)}
@@ -831,7 +842,7 @@ function renderHow(){const cats=[...new Set(S.rooms.filter(r=>roomArea(r)>0).map
 const r50=n=>Math.round(n/50)*50;
 function extrasUI(){
   $("trim").value=S.trim;$("furn").value=S.furn;$("steps").value=S.steps||0;$("toilets").value=S.toilets;
-  $("sub").value=S.sub||"concrete";{const w=S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="wood");$("floor2Row").hidden=!w;$("floor2").value=S.floor2||"no";$("corkRow").hidden=!(w&&S.floor2==="yes");$("cork").value=S.cork||"no";const _c=calc().lines.map(x=>x.label).join("|");$("polyRow").hidden=!/Moisture barrier poly/.test(_c);$("lamRow").hidden=!/Foam underlayment/.test(_c);$("glueRow").hidden=!/Wood flooring adhesive/.test(_c);["uPoly","uLam"].forEach(k=>$(k).value=S[k]||"mohawk");$("uGlue").value=GLUES[S.uGlue2]?S.uGlue2:"s35";$("padRow").hidden=!S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="carpet");$("pad").value=padSel().id}$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
+  $("sub").value=S.sub||"concrete";{const w=S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="wood");$("floor2Row").hidden=!w;$("floor2").value=S.floor2||"no";$("corkRow").hidden=!(w&&S.floor2==="yes");$("cork").value=S.cork||"no";const _c=calc().lines.map(x=>x.label).join("|");$("polyRow").hidden=!/Moisture barrier poly/.test(_c);$("lamRow").hidden=!/Foam underlayment/.test(_c);$("glueRow").hidden=!/Wood flooring adhesive/.test(_c);{const m=/Wood flooring adhesive: (\d+) bucket/.exec(_c);$("glueNote").textContent=m?`1 bucket = 4 gallons, covers about ${glueSel().sf} sq ft of wood. Recommended for your job: ${m[1]} bucket${m[1]>1?"s":""}.`:""}["uPoly","uLam"].forEach(k=>$(k).value=S[k]||"mohawk");$("uGlue").value=GLUES[S.uGlue2]?S.uGlue2:"s35";$("padRow").hidden=!S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="carpet");$("pad").value=padSel().id}$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
   {const cats=new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat));
    ["doorTrim","toilets","appliances"].forEach(k=>{const y=(+S[k]||0)>0;$("yn_"+k).value=y?"yes":"no";$("row_"+k).hidden=!y});
    {const pr=S.prep||"ok";$("prepYN").value=pr==="ok"?"no":pr==="unsure"?"unsure":"yes";$("prepRow").hidden=!(pr==="fix"||pr==="level");if(pr==="fix"||pr==="level")$("prep").value=pr}
@@ -863,6 +874,7 @@ function renderQuote(){
   extrasUI();
   const q=calc();
   $("qTotal").textContent=money(q.total);
+  {const w=S.prep&&S.prep!=="ok"&&q.total>0?calc({worst:true}):null;$("qWorst").hidden=!w;if(w)$("qWorst").textContent=`Worst case, if your whole floor needs 1/4 in self-leveling: up to ${money(r50(w.total*1.10))} total. We confirm from your photos.`}
   $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft installed${q.boughtSf?` · ${q.boughtSf} sq ft of material purchased`:""}`:"Add your rooms in step 2";
   $("qTable").innerHTML=q.lines.map(l=>l.head?`<tr class="rhead"><td colspan="2"><b>${l.label}</b></td></tr>`:`<tr class="${l.adj?"adj":""}"><td>${l.label}${l.sub?`<div class="sub">${l.sub}</div>`:""}</td><td>${money(l.amt)}</td></tr>`).join("")+
     `<tr><td>Sales tax on material (10.5%)</td><td>${money(q.tax)}</td></tr><tr><td><b>Material</b> ${money(q.mat)} · <b>Installation</b> ${money(q.lab)}</td><td><b>${money(q.total)}</b></td></tr><tr><td>Shipping<div class="sub">Not included. When you approve this quote, we add shipping and send your official quote to sign online (DocuSign).</div></td><td><b>Not included</b></td></tr>`;
@@ -888,7 +900,7 @@ $("sampleBtn").onclick=()=>{
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
 $("pad").innerHTML=["Mohawk","Shaw"].map(b=>`<optgroup label="${b}">`+PADS.filter(x=>x.brand===b).map(x=>`<option value="${x.id}">${x.name.replace(/^(Mohawk|Shaw TotalWorx) /,"")}, ${money2(x.price)}/sq ft${x.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("");$("pad").addEventListener("change",()=>{S.cpad=$("pad").value;save();track("pad",S.cpad);renderQuote();flashTotal()});
-$("sub").addEventListener("change",()=>extrasUI());["uPoly","uLam"].forEach(k=>$(k).addEventListener("change",()=>{S[k]=$(k).value;save();track(k,S[k]);renderQuote();flashTotal()}));$("uGlue").addEventListener("change",()=>{S.uGlue2=$("uGlue").value;save();track("glue",S.uGlue2);renderQuote();flashTotal()});$("floor2").addEventListener("change",()=>{S.floor2=$("floor2").value;if(S.floor2==="yes"&&(!S.cork||S.cork==="no"))S.cork="c3";save();track("floor2",S.floor2);extrasUI();renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);extrasUI();renderQuote();flashTotal()});
+$("sub").addEventListener("change",()=>extrasUI());["uPoly","uLam"].forEach(k=>$(k).addEventListener("change",()=>{S[k]=$(k).value;save();track(k,S[k]);renderQuote();flashTotal()}));$("uGlue").addEventListener("change",()=>{S.uGlue2=$("uGlue").value;save();track("glue",S.uGlue2);extrasUI();renderQuote();flashTotal()});$("floor2").addEventListener("change",()=>{S.floor2=$("floor2").value;save();track("floor2",S.floor2);extrasUI();renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);extrasUI();renderQuote();flashTotal()});
 ["trim","prep","furn","hasStairs","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
 const DB={url:"",key:"",company:"gfc"};
