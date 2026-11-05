@@ -54,10 +54,11 @@ function testQuote() {
 // ---------- intake ----------
 function doPost(e) {
   var raw = (e && e.postData && e.postData.contents) || '';
-  if (!raw || raw.length > 200000) return out_('ignored');
+  if (!raw || raw.length > 20000000) return out_('ignored');
   var d;
   try { d = JSON.parse(raw); } catch (x) { return out_('ignored'); }
   if (!d || d.k !== INGEST_KEY) return out_('ignored');
+  if (d.kind !== 'photos' && raw.length > 200000) return out_('ignored');
   handle_(d);
   return out_('ok');
 }
@@ -80,6 +81,8 @@ function handle_(d) {
   if (kind === 'lead') rows.push(base(now, 'SIGN-UP', who.login ? 'logged-in store customer' : 'filled contact form'));
   if (kind === 'quote') rows.push(base(now, 'QUOTE SENT', '$' + num_(q.total) + (q.priv ? ' (private pricing)' : '')));
   if (kind === 'sample') rows.push(base(now, 'SAMPLE REQUEST', clip_(s.address, 200)));
+  var photos = kind === 'photos' ? (d.photos || []).slice(0, 40) : [];
+  if (kind === 'photos') rows.push(base(now, 'PHOTOS', photos.length + ' room/stair photo(s), emailed to you'));
 
   var lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -102,6 +105,7 @@ function handle_(d) {
     if (kind === 'quote') mailQuote_(who, q);
     if (kind === 'sample') mailSample_(who, s);
     if (kind === 'lead' && EMAIL_ON_SIGNUP) mailLead_(who, d.interests);
+    if (kind === 'photos' && photos.length) mailPhotos_(who, photos, d.qname);
   } catch (err) {
     console.error('email failed: ' + err);
   }
@@ -116,9 +120,27 @@ function mailQuote_(who, q) {
     contact_(who, q.phone) +
     '<p><b>Instant quote: $' + num_(q.total).toLocaleString('en-US') + '</b>' + (q.priv ? ' (private pricing)' : '') +
     (q.best ? '<br>Best time to call: ' + esc_(q.best) : '') +
-    (q.videos || q.photos ? '<br>They have ' + num_(q.videos) + ' video(s) and ' + num_(q.photos) + ' floor photo(s) to text you.' : '') + '</p>' +
+    (q.photos ? '<br>' + num_(q.photos) + ' photo(s): they arrive in a separate email right after this one.' : '') + (q.videos ? '<br>They have ' + num_(q.videos) + ' video(s) to text you.' : '') + '</p>' +
     '<pre style="white-space:pre-wrap;font:13px/1.45 monospace;background:#f3f5f9;padding:12px;border-radius:8px">' + esc_(q.summary) + '</pre>',
     who.email);
+}
+
+function mailPhotos_(who, photos, qname) {
+  var name = qname || who.name || 'Someone';
+  var files = [];
+  photos.forEach(function (p, i) {
+    var m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(String(p.data || ''));
+    if (!m) return;
+    var label = clip_(p.label, 60).replace(/[^\w .-]/g, '') || ('photo ' + (i + 1));
+    files.push(Utilities.newBlob(Utilities.base64Decode(m[2]), 'image/' + m[1], label + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1])));
+  });
+  if (!files.length) return;
+  var opts = { to: NOTIFY, subject: 'Photos for instant quote: ' + name + ' (' + files.length + ')',
+    htmlBody: '<p><b>' + esc_(name) + '</b> sent ' + files.length + ' photo(s) with their instant quote (one email before this has the quote).</p>' +
+      contact_(who) + '<p>' + files.map(function (f) { return esc_(f.getName()); }).join('<br>') + '</p>',
+    name: 'GFC Instant Quote', attachments: files };
+  if (who.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(who.email)) opts.replyTo = who.email;
+  MailApp.sendEmail(opts);
 }
 
 function mailSample_(who, s) {
