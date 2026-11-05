@@ -60,7 +60,7 @@ tr.rhead td{padding-top:14px;border-bottom:0;text-align:left!important;color:var
 .howto ol{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .howto li{margin:3px 0}
 #v-quote.locked > :not(.keep){display:none!important}
-#v-quote:not(.locked) #gate{display:none}
+#v-quote:not(.locked) #gate{display:none!important}
 .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:15px;line-height:1.4}
 .chk input{width:22px;height:22px;flex:none;margin-top:1px}
 .privbar{text-align:center;font-size:14px;margin:8px 0 0}
@@ -131,6 +131,7 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 nav.tabs button[aria-current="page"] .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .price.tot{font-weight:800;color:var(--ink);border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}
 .qs{display:grid;gap:14px}.qs .two{grid-template-columns:1fr}.qs .qh{font-weight:700;font-size:15px;margin-top:4px}.qs .note{margin-top:-6px}
+.privbar{margin:8px 0 0;padding:10px 12px;border-radius:10px;background:#E7F5EC;color:#14532D;font-size:15px}.privbar a{color:#14532D;font-weight:700}.privbar:empty{display:none}
 .resonly{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#FFF4D6;color:#5C4300;font-size:14px}.resonly a{color:inherit;font-weight:700}
 .srch{position:relative;flex:1;min-width:180px}.srch input{width:100%}
 .sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:8;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(15,31,61,.15);overflow:hidden;max-height:60vh;overflow-y:auto}
@@ -169,7 +170,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
   <!-- 1 FLOORS -->
   <section class="view" id="v-floors">
     <div><div class="step">Step 1 of 4</div><h2>Pick your floor</h2>
-      <p class="lead">Tap a floor to use it. You can choose a different floor for each room in step 2.</p><p class="resonly"><b>Instant quotes are for homes only (residential).</b> Commercial project? Call <a href="tel:+18182031168">(818) 203-1168</a> for a free estimate.</p></div>
+      <p class="lead">Tap a floor to use it. You can choose a different floor for each room in step 2.</p><p class="resonly"><b>Instant quotes are for homes only (residential).</b> Commercial project? Call <a href="tel:+18182031168">(818) 203-1168</a> for a free estimate.</p><p class="privbar" id="privBar"></p></div>
     <div class="chips" id="cats"></div>
     <div class="row"><div class="srch"><input id="search" type="search" placeholder="Search a style, brand or color" aria-label="Search floors" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sugg"><div class="sugg" id="sugg" role="listbox" hidden></div></div>
       <select id="sort" aria-label="Sort" style="width:auto"><option value="">Sort: featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
@@ -298,6 +299,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     <form class="panel keep" id="gate" style="display:grid;gap:12px" novalidate>
       <b style="font-size:20px">Where should we send your quote?</b>
       <span class="note">Enter your info once to see your price. We save your quote so you can come back to it.</span>
+      <span class="note" id="gateLogin"><b>Have a store account?</b> <a id="gateLoginA" target="_top" rel="noopener">Sign in instead</a> and skip this form. You also get your private price.</span>
       <div class="two">
         <label>First and last name<input id="gName" autocomplete="name" required></label>
         <label>Email<input id="gEmail" type="email" autocomplete="email" inputmode="email" required></label>
@@ -679,7 +681,7 @@ function calc(){
     const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const pp=privPrice(p),unit=pp||p.price;const m=buy*unit;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
     if(p.service) add(`${r.name}: ${p.name}`,`${a.toFixed(0)} sq ft refinished at ${money2(lr.rate)}/sq ft. Stain, sealer and finish included`,m,l);
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
-      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":""}`,m,0);
+      add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}${(p.cat==="lvp"||p.cat==="laminate")&&S.sub!=="wood"?". Plastic moisture film over concrete included":""}`,0,l);
       if((p.cat==="lvp"||p.cat==="laminate")&&p.pad!==1){add(`Foam underlayment: ${a.toFixed(0)} sq ft`,`${money2(RATES.underlayFoam)}/sq ft installed. ${p.pad===0?"This floor has no pad attached, so it needs underlayment":"We couldn't confirm a pad on this floor. If it has one attached, we take this off"}`,0,a*RATES.underlayFoam)}}
     const ex=REMOVAL[r.existing];
@@ -742,8 +744,12 @@ function renderPriv(){const el=$("privPanel");if(!el)return;const g=getPriv();S.
     <button class="btn primary" type="button" id="pGo" style="justify-self:start">Show my private price</button>`;
     $("pGo").onclick=()=>{const a=$("pAddr").value.trim(),y=$("pPay").value;if(a.length<8||!y||!S.rooms.some(r=>roomArea(r)>0)){$("pErr").hidden=false;return}
       S.priv={addr:a,pay:y,at:new Date().toISOString().slice(0,10)};track("private","on");save();renderQuote()};return}
-  el.innerHTML=`<b>Private quote${nm?" for "+esc(nm):""}</b><span class="note">Material is at your private Gomez Flooring price for this project (${esc(S.priv.addr)}, paying by ${esc(S.priv.pay)}). This price is only for you, good for 14 days. Please don't post or share it.</span><button class="btn small" type="button" id="pEdit" style="justify-self:start">Change address or payment</button>`;
+  el.innerHTML=`<b>Private quote${nm?" for "+esc(nm):""}</b><span class="note">Material is at your private Gomez Flooring price where we have one for this project (${esc(S.priv.addr)}, paying by ${esc(S.priv.pay)}). This price is only for you, good for 14 days. Please don't post or share it. Floors marked "Ask us" show the regular price here. Send us this quote and we'll reply with your private price on those.</span><button class="btn small" type="button" id="pEdit" style="justify-self:start">Change address or payment</button>`;
   $("pEdit").onclick=()=>{S.priv={addr:S.priv.addr,pay:""};save();renderQuote()}}
+function renderPrivBar(){const el=$("privBar");if(!el)return;const g=getPriv();
+  if(!g){el.innerHTML=`<b>Want your private Gomez Flooring price?</b> <a href="${LOGIN_URL}" target="_top" rel="noopener">Sign in or create a free account ›</a>`;return}
+  const nm=(g.customer&&g.customer.name)||"";el.innerHTML=`<b>Signed in${nm?" as "+esc(nm):""}.</b> Your private price shows in your quote (step 4) after you add the job address and how you'll pay.`}
+renderPrivBar();
 function renderQuote(){
   renderPriv();
   extrasUI();
@@ -822,7 +828,10 @@ function interests(){const a=S.activity||[];const cnt={};const fl={};
   const srch=[...new Set(a.filter(x=>x.e==="search").map(x=>x.d))].slice(-5).join(", ")||"-";
   return `Interested in: ${top(cnt)}\nFloors looked at most: ${top(fl)}\nSearched: ${srch}`}
 function contactText(){const c=S.contact||{};return `Email: ${c.email||"-"}\nZIP: ${c.zip||"-"}\nPromo emails OK: ${c.mailOk?"YES "+c.when:"no"}\nPromo texts OK: ${c.textOk?"YES "+c.when:"no"}`}
-function gateUI(){{const g=getPriv(),c=g&&g.customer;if(c&&!S.contact){if(!$("gName").value&&c.name)$("gName").value=c.name;if(!$("gEmail").value&&c.email)$("gEmail").value=c.email;if(!$("gPhone").value&&c.phone)$("gPhone").value=c.phone}}const lock=!S.contact;$("v-quote").classList.toggle("locked",lock);
+function gateUI(){{const g=getPriv(),c=g&&g.customer;
+  if($("gateLoginA")){$("gateLoginA").href=LOGIN_URL;$("gateLogin").hidden=!!g}
+  if(c&&c.email&&!S.contact){S.contact={name:c.name||"",email:c.email,phone:c.phone||"",zip:S.zip||"",mailOk:false,textOk:false,when:new Date().toISOString().slice(0,10),via:"account"};track("signup","account");save()}
+  if(c&&!S.contact){if(!$("gName").value&&c.name)$("gName").value=c.name;if(!$("gEmail").value&&c.email)$("gEmail").value=c.email;if(!$("gPhone").value&&c.phone)$("gPhone").value=c.phone}}const lock=!S.contact;$("v-quote").classList.toggle("locked",lock);
   if(S.contact){if(!$("cName").value)$("cName").value=S.contact.name||"";if(!$("cPhone").value)$("cPhone").value=S.contact.phone||""}}
 $("gate").addEventListener("submit",e=>{e.preventDefault();
   const name=$("gName").value.trim(),email=$("gEmail").value.trim();
