@@ -337,7 +337,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     </form>
     </div>
     </div>
-    <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping not included)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span></div>
+    <div class="total"><span class="rng">Estimated total, material, installation and tax (shipping not included)</span><span class="big" id="qTotal">$0</span><span class="rng" id="qRange"></span><span class="rng" id="qWorst" hidden></span></div>
     <div class="panel" id="privPanel" style="display:grid;gap:10px"></div>
     <div class="panel upd" id="updPanel">
       <b>Update my quote</b>
@@ -769,7 +769,11 @@ function laborKey(p){const pat=p.pattern||"standard";
 // Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
 function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
 const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down",engineered_wood:"nailed or floating over wood subfloor"};
-function calc(){
+// Self-leveling (Shaw TotalWorx store prices/specs): Underlay-SLU 50 lb bag $36.29 covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
+// 9050 primer 4 gal pail $91.49 at 300-350 sq ft/gal (plan 1,200 sq ft per pail). Labor per sq ft leveled.
+const LEVEL={bag:36.29,primer:91.49,primerSf:1200,labor:2.00};
+function levelCost(a,deep){const bags=Math.ceil(a/(deep?25:50)),pr=Math.ceil(a/LEVEL.primerSf);return {bags,pr,mat:bags*LEVEL.bag+pr*LEVEL.primer,lab:a*LEVEL.labor}}
+function calc(o){o=o||{};
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
   let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;const need={poly:0,lam:0,glue:0,cork:0,pad:0};
@@ -803,8 +807,10 @@ function calc(){
   }
   if(anyRemoval)add("Dump fee","We haul away the old floor and all job trash. Flat fee per job",0,RATES.dumpFee);
   const hardSf=S.rooms.reduce((t,r)=>t+(roomArea(r)>0&&P(r.floor).cat!=="carpet"?roomArea(r):0),0);
-  if(S.prep==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
-  if(S.prep==="level"&&totalSf>0){const bags=Math.max(2,Math.ceil((hardSf||totalSf)/100));add(`Floor prep: self-leveler, about ${bags} bags`,`${money(RATES.selfLevelBag)} per 50 lb bag installed, material included. Estimate, we confirm from your photos`,0,bags*RATES.selfLevelBag)}
+  const prepMode=o.worst&&S.prep!=="ok"?"worst":S.prep;
+  if(prepMode==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
+  if((prepMode==="level"||prepMode==="worst")&&totalSf>0){const A=hardSf||totalSf,deep=prepMode==="worst",L=levelCost(A,deep);
+    add(`Floor prep: self-leveler, ${L.bags} bags + ${L.pr} primer bucket${L.pr>1?"s":""}`,`Shaw TotalWorx Underlay-SLU, 50 lb bag at ${money2(LEVEL.bag)} (covers about ${deep?25:50} sq ft at ${deep?"1/4":"1/8"} in), plus 9050 primer at ${money2(LEVEL.primer)} per 4 gal bucket. Leveling labor ${money2(LEVEL.labor)}/sq ft for ${A.toFixed(0)} sq ft. Estimate, we confirm from your photos`,L.mat,L.lab)}
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
   const st=S.hasStairs==="yes"?Math.max(0,Math.min(60,Math.round(+S.steps||0))):0;
   const stT=stairKind();if(st>0){if(stT==="carpet"){add(`Carpet stairs: ${st} step${st>1?"s":""}`,`${money(RATES.stepCarpet)} per step plus carpet and pad. We confirm from your stair photo`,st*RATES.stepMatCarpet,st*RATES.stepCarpet)}
@@ -867,6 +873,7 @@ function renderQuote(){
   extrasUI();
   const q=calc();
   $("qTotal").textContent=money(q.total);
+  {const w=S.prep&&S.prep!=="ok"&&q.total>0?calc({worst:true}):null;$("qWorst").hidden=!w;if(w)$("qWorst").textContent=`Worst case, if your whole floor needs 1/4 in self-leveling: up to ${money(r50(w.total*1.10))} total. We confirm from your photos.`}
   $("qRange").textContent=q.total>0?`Likely range ${money(r50(q.total*0.95))} to ${money(r50(q.total*1.10))} · ${q.totalSf.toFixed(0)} sq ft installed${q.boughtSf?` · ${q.boughtSf} sq ft of material purchased`:""}`:"Add your rooms in step 2";
   $("qTable").innerHTML=q.lines.map(l=>l.head?`<tr class="rhead"><td colspan="2"><b>${l.label}</b></td></tr>`:`<tr class="${l.adj?"adj":""}"><td>${l.label}${l.sub?`<div class="sub">${l.sub}</div>`:""}</td><td>${money(l.amt)}</td></tr>`).join("")+
     `<tr><td>Sales tax on material (10.5%)</td><td>${money(q.tax)}</td></tr><tr><td><b>Material</b> ${money(q.mat)} · <b>Installation</b> ${money(q.lab)}</td><td><b>${money(q.total)}</b></td></tr><tr><td>Shipping<div class="sub">Not included. When you approve this quote, we add shipping and send your official quote to sign online (DocuSign).</div></td><td><b>Not included</b></td></tr>`;
