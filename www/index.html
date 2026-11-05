@@ -724,6 +724,10 @@ $("sampleBtn").onclick=()=>{
   const list=(S.samples||[]).map(P);
   $("sampleSummary").value=`Sample request, $25 (app)\nName: ${$("sName").value||"-"}\nPhone: ${$("sPhone").value||"-"}\nMail to: ${$("sAddr").value||"-"}\n\nSamples:\n`+list.map(p=>`- ${p.name}, ${p.color} (${p.kind})`).join("\n");
   $("sampleSent").hidden=false;
+  if(FEED.url&&!dbOn()){const box=$("sampleSent");officeUI(box,true);$("sampleMsg").textContent="Sending your request...";
+    feedDeliver("sample",$("sampleSummary").value,{sample:{name:$("sName").value,phone:$("sPhone").value,address:$("sAddr").value,summary:$("sampleSummary").value}}).then(ok=>{
+      if(ok)$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples.";
+      else{officeUI(box,false);$("sampleMsg").innerHTML="We couldn't send it automatically. Please call or text <b>(818) 203-1168</b>, or copy this and send it to us."}})}
   if(dbOn())dbInsert("sample_requests",{name:$("sName").value,phone:$("sPhone").value,address:$("sAddr").value,samples:list.map(p=>({id:p.id,name:p.name,color:p.color})),summary:$("sampleSummary").value})
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
@@ -739,9 +743,38 @@ async function dbInsert(table,row){if(!dbOn())throw new Error("off");
 async function dbUpload(path,file){const r=await fetch(DB.url+"/storage/v1/object/walkthroughs/"+path,{method:"POST",headers:{apikey:DB.key,Authorization:"Bearer "+DB.key,"Content-Type":file.type||"video/mp4","x-upsert":"false"},body:file});
   if(!r.ok)throw new Error("upload "+r.status);return path}
 
+// ---------- OWNER ALERTS (internal, never shown to customers) ----------
+// Sends app activity, sign-ups, quote and sample requests to the owner's private Google Sheet,
+// which emails the owner and powers the live-feed dashboard. Setup: backchannel/README.md. Empty url = off.
+var FEED={url:"https://script.google.com/macros/s/AKfycbzg_P-7Vi9M0sAjEnJ2D2qz_ZwglduiCWKZmb2JMGUHB-Bx448zchnTHTERTgBlHRmyHw/exec",key:"gfc-iq"};
+var feedQ=[],feedT=null,feedSid=uid(),feedLast={};
+try{const q=((window.parent!==window?window.parent.location.search:location.search)||"").match(/gfcstaff=([01])/);if(q){if(q[1]==="1")localStorage.setItem("gfc_staff","1");else localStorage.removeItem("gfc_staff")}}catch(e){}
+function feedOn(){if(!FEED||!FEED.url)return false;try{return localStorage.getItem("gfc_staff")!=="1"}catch(e){return true}}
+function feedVid(){try{let v=localStorage.getItem("gfc_vid");if(!v){v=uid();localStorage.setItem("gfc_vid",v)}return v}catch(e){return feedSid}}
+function feedWho(){const c=S.contact,g=getPriv(),gc=g&&g.customer;
+  if(c)return{name:c.name,email:c.email,phone:c.phone,zip:c.zip||S.zip||""};
+  if(gc&&gc.email)return{name:gc.name||"",email:gc.email,phone:gc.phone||"",zip:S.zip||"",login:1};
+  return{zip:S.zip||""}}
+function feedBody(kind,extra){clearTimeout(feedT);feedT=null;
+  return JSON.stringify({k:FEED.key,kind,vid:feedVid(),sid:feedSid,src:window.parent!==window?"web":"app",who:feedWho(),ev:feedQ.splice(0),...(extra||{})})}
+// Quote and sample requests go to the office directly; resolves true only when the office copy is saved.
+// (Not skipped by gfcstaff, so the owner can still send himself a test quote.)
+async function feedDeliver(kind,text,extra){if(!FEED||!FEED.url)return false;if(feedLast[kind]===text)return true;
+  for(let i=0;i<2;i++){try{const r=await fetch(FEED.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:feedBody(kind,extra)});
+    if(r.ok&&(await r.text()).trim()==="ok"){feedLast[kind]=text;return true}}catch(e){}}
+  return false}
+function feedSend(kind,extra,beacon){if(!feedOn())return;
+  const body=feedBody(kind,extra);
+  try{if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(FEED.url,new Blob([body],{type:"text/plain"})))return;
+    fetch(FEED.url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body,keepalive:body.length<60000}).catch(()=>{})}catch(e){}}
+function feedName(d){if(typeof d!=="string")return d;const m=/^([^~|]+)~(\d+)$/.exec(d),x=m&&BYH[m[1]];if(!x)return d;const k=(x.k||[])[+m[2]];return (x.v?x.v+" ":"")+x.t+(k?", "+k[0]:"")}
+function feedPush(e,d){if(!feedOn())return;d=feedName(d);feedQ.push({t:Date.now(),e,d:String(d==null?"":d).slice(0,200)});if(feedQ.length>50)feedQ=feedQ.slice(-50);
+  if(!feedT)feedT=setTimeout(()=>feedSend("events"),8000)}
+function feedOnce(kind,text,extra){if(!text||feedLast[kind]===text)return;feedLast[kind]=text;feedSend(kind,extra)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&feedQ.length)feedSend("events",null,true)});
 // ---------- CONTACT + ACTIVITY (first-party only, disclosed at collection) ----------
 const PRIVACY_URL=/gomezflooringcompany\.store|jsdelivr/.test(location.href+document.baseURI)?"https://gomezflooringcompany.store/pages/gfc-instant-quote-privacy":"privacy.html";
-function track(e,d){S.activity=S.activity||[];S.activity.push({t:Date.now(),e,d});if(S.activity.length>300)S.activity=S.activity.slice(-300);save()}
+function track(e,d){feedPush(e,d);S.activity=S.activity||[];S.activity.push({t:Date.now(),e,d});if(S.activity.length>300)S.activity=S.activity.slice(-300);save()}
 function interests(){const a=S.activity||[];const cnt={};const fl={};
   a.forEach(x=>{if(x.e==="category")cnt[x.d]=(cnt[x.d]||0)+1;if(["use","color","sample","viz"].includes(x.e)){const p=P(x.d);if(p){cnt[p.cat]=(cnt[p.cat]||0)+1;fl[p.name]=(fl[p.name]||0)+1}}});
   const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]).join(", ")||"-";
@@ -754,11 +787,11 @@ $("gate").addEventListener("submit",e=>{e.preventDefault();
   const name=$("gName").value.trim(),email=$("gEmail").value.trim();
   if(!name||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){$("gErr").hidden=false;return}
   S.contact={name,email,phone:$("gPhone").value.trim(),zip:$("gZip").value.trim()||S.zip||"",mailOk:$("gMail").checked,textOk:$("gText").checked&&!!$("gPhone").value.trim(),when:new Date().toISOString().slice(0,10)};
-  track("signup",S.contact.mailOk?"optin":"no-optin");save();gateUI();renderQuote();window.scrollTo(0,0);
+  track("signup",S.contact.mailOk?"optin":"no-optin");save();feedOnce("lead",S.contact.email+"|"+S.contact.phone,{interests:interests()});gateUI();renderQuote();window.scrollTo(0,0);
   if(dbOn()){const c=S.contact;dbInsert("contacts",{name:c.name,email:c.email,phone:c.phone,zip:c.zip,mail_ok:c.mailOk,text_ok:c.textOk,consent_at:c.when,interests:interests(),activity:(S.activity||[]).slice(-100)}).catch(()=>{})}});
 document.querySelectorAll(".privlink").forEach(a=>{a.href=PRIVACY_URL;a.target="_blank";a.rel="noopener"});
 $("delMe").onclick=e=>{e.preventDefault();if(!confirm("Delete your name, email, phone and browsing history from this app? To also delete what you already sent us, call (818) 203-1168 or email gomezflooringcompany@gmail.com."))return;
-  delete S.contact;S.activity=[];save();["gName","gEmail","gPhone","gZip","cName","cPhone"].forEach(id=>$(id).value="");$("gMail").checked=$("gText").checked=false;gateUI();toast("Your info was deleted from this app")};
+  delete S.contact;S.activity=[];save();try{localStorage.removeItem("gfc_vid")}catch(e){}["gName","gEmail","gPhone","gZip","cName","cPhone"].forEach(id=>$(id).value="");$("gMail").checked=$("gText").checked=false;gateUI();toast("Your info was deleted from this app")};
 // ---------- VIDEO WALKTHROUGH + REFINISH PHOTOS ----------
 const videos=[];const refPhotos=[];let stairN=0;
 function refUI(){const on=S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="refinish");$("refPanel").hidden=!on;$("stainNote").hidden=$("stains").value!=="yes";
@@ -784,9 +817,18 @@ $("sendBtn").onclick=()=>{
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
   $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\n${privOn()?`Private pricing: YES (logged in as ${(getPriv().customer||{}).email||"-"}), job address: ${S.priv.addr}, payment: ${S.priv.pay}\n`:""}Instant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
-  $("sent").hidden=false;$("summary").scrollIntoView({behavior:"smooth",block:"center"});
+  $("sent").hidden=false;
+  if(FEED.url&&!dbOn()){sendToOffice(q);return}
+  $("summary").scrollIntoView({behavior:"smooth",block:"center"});
   if(dbOn())sendOnline(q);
 };
+function officeUI(box,ok){["summary","copyBtn","smsLink","sampleSummary","sampleCopy"].forEach(id=>{const el=$(id);if(el&&box.contains(el))el.hidden=ok})}
+async function sendToOffice(q){const btn=$("sendBtn");btn.disabled=true;$("sentMsg").textContent="Sending your request...";officeUI($("sent"),true);
+  const ok=await feedDeliver("quote",$("summary").value,{quote:{total:Math.round(q.total),priv:privOn(),city:$("cCity").value,best:$("cTime").value,name:$("cName").value,phone:$("cPhone").value,videos:videos.length,photos:refPhotos.length,summary:$("summary").value}});
+  btn.disabled=false;
+  if(ok){track("request","sent");$("sentMsg").innerHTML="<b>✓ Sent!</b> We got your request and will call you to confirm your price."+(videos.length+refPhotos.length?" Tap below to send us your videos and photos.":"");toast("Request sent")}
+  else{officeUI($("sent"),false);$("sentMsg").innerHTML="We couldn't send it automatically. Please call or text <b>(818) 203-1168</b>, or copy this and send it to us."}
+  $("sent").scrollIntoView({behavior:"smooth",block:"center"})}
 async function sendOnline(q){const id=uid(),c=S.contact||{};const btn=$("sendBtn");btn.disabled=true;
   $("sentMsg").textContent="Sending your request...";
   try{const paths=[];for(let i=0;i<videos.length;i++){$("sentMsg").textContent=`Uploading video ${i+1} of ${videos.length}... keep the app open.`;
@@ -1033,6 +1075,7 @@ function boot(){
     save();
   }
   go(S.view||"floors");
+  {let r="";try{r=(window.parent!==window?window.parent.document.referrer:document.referrer)||""}catch(e){}feedPush("open",(S.view||"floors")+(r?" from "+r.slice(0,120):""))}
 }
 fetch("catalog.json").then(r=>r.ok?r.json():[]).then(d=>{CATALOG=d||[];CATALOG.forEach(x=>BYH[x.h]=x);boot()}).catch(()=>boot());
 </script>
