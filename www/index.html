@@ -41,7 +41,7 @@ h1,h2,h3{font-family:var(--display);letter-spacing:.01em;text-wrap:balance;margi
 .topbar .tag{font-size:12px;opacity:.8}
 .topbar .test{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.5);border-radius:4px;padding:2px 6px}
 main{max-width:760px;margin:0 auto;padding-block:16px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.view{display:grid;gap:16px}
+.view{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}.view>*{min-width:0}
 .back{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:16px;padding:6px 0;margin:0 0 6px;cursor:pointer;display:block}
 .step{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700}
 .lead{color:var(--muted);margin:4px 0 0}
@@ -124,6 +124,7 @@ details.tut[open] summary::after{content:"–"}
 table.q{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 table.q td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 table.q td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+table.q tr.rhead td{white-space:normal;padding-left:0}
 table.q .sub{font-size:13px;color:var(--muted)}
 table.q tr.adj td{color:var(--accent)}
 .total{background:var(--navy);color:#fff;border-radius:10px;padding:18px 16px;display:grid;gap:4px}
