@@ -770,9 +770,9 @@ function laborKey(p){const pat=p.pattern||"standard";
 // Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
 function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
 const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down",engineered_wood:"nailed or floating over wood subfloor"};
-// Self-leveling (Shaw TotalWorx store prices/specs): Underlay-SLU 50 lb bag $36.29 covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
-// 9050 primer 4 gal pail $91.49 at 300-350 sq ft/gal (plan 1,200 sq ft per pail). Labor per sq ft leveled.
-const LEVEL={bag:36.29,primer:91.49,primerSf:1200,labor:2.00};
+// Self-leveling (Shaw PrepWorx, 2026 TotalWorx guide cost x1.5): VL201 50 lb bag $40.50 covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
+// 9050 primer 4 gal pail $91.49 (store) at 300-350 sq ft/gal (plan 1,200 sq ft per pail). Labor per sq ft leveled.
+const LEVEL={bag:40.50,primer:91.49,primerSf:1200,labor:2.00};
 function levelCost(a,deep){const bags=Math.ceil(a/(deep?25:50)),pr=Math.ceil(a/LEVEL.primerSf);return {bags,pr,mat:bags*LEVEL.bag+pr*LEVEL.primer,lab:a*LEVEL.labor}}
 function calc(o){o=o||{};
   const lines=[];let mat=0,lab=0;
@@ -811,7 +811,7 @@ function calc(o){o=o||{};
   const prepMode=o.worst&&S.prep!=="ok"?"worst":S.prep;
   if(prepMode==="fix"&&totalSf>0) add("Floor prep: patch cracks and low spots",`${(hardSf||totalSf).toFixed(0)} sq ft at ${money2(RATES.prepPatch)}/sq ft. Estimate, we confirm from your photos`,0,(hardSf||totalSf)*RATES.prepPatch);
   if((prepMode==="level"||prepMode==="worst")&&totalSf>0){const A=hardSf||totalSf,deep=prepMode==="worst",L=levelCost(A,deep);
-    add(`Floor prep: self-leveler, ${L.bags} bags + ${L.pr} primer bucket${L.pr>1?"s":""}`,`Shaw TotalWorx Underlay-SLU, 50 lb bag at ${money2(LEVEL.bag)} (covers about ${deep?25:50} sq ft at ${deep?"1/4":"1/8"} in), plus 9050 primer at ${money2(LEVEL.primer)} per 4 gal bucket. Leveling labor ${money2(LEVEL.labor)}/sq ft for ${A.toFixed(0)} sq ft. Estimate, we confirm from your photos`,L.mat,L.lab)}
+    add(`Floor prep: self-leveler, ${L.bags} bags + ${L.pr} primer bucket${L.pr>1?"s":""}`,`Shaw PrepWorx VL201 self-leveler, 50 lb bag at ${money2(LEVEL.bag)} (covers about ${deep?25:50} sq ft at ${deep?"1/4":"1/8"} in), plus Shaw 9050 primer at ${money2(LEVEL.primer)} per 4 gal bucket. Leveling labor ${money2(LEVEL.labor)}/sq ft for ${A.toFixed(0)} sq ft. Estimate, we confirm from your photos`,L.mat,L.lab)}
   if(S.furn==="yes"&&totalSf>0) add("Move furniture and put it back",`${S.rooms.filter(r=>roomArea(r)>0).length} rooms`,0,S.rooms.filter(r=>roomArea(r)>0).length*RATES.furniture);
   const st=S.hasStairs==="yes"?Math.max(0,Math.min(60,Math.round(+S.steps||0))):0;
   const stT=stairKind();if(st>0){if(stT==="carpet"){add(`Carpet stairs: ${st} step${st>1?"s":""}`,`${money(RATES.stepCarpet)} per step plus carpet and pad. We confirm from your stair photo`,st*RATES.stepMatCarpet,st*RATES.stepCarpet)}
