@@ -412,9 +412,9 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
 // ---------- PRICE DATA (labor from GFC price sheet; material = sample sell prices) ----------
 const LABOR = {
   lvp_click:{rate:3.25,unit:"sf"}, laminate:{rate:3.25,unit:"sf"}, engineered_wood:{rate:5.50,unit:"sf"}, hardwood_nail:{rate:5.50,unit:"sf"},
-  carpet_stretch:{rate:1.40,unit:"sf"}, refinish:{rate:7.00,unit:"sf"}, tile:{rate:12.00,unit:"sf"}, lvt_gluedown:{rate:3.50,unit:"sf"},
-  engineered_wood_glue:{rate:6.50,unit:"sf"}, herringbone:{rate:6.50,unit:"sf"}, herringbone_laminate:{rate:4.00,unit:"sf"},
-  herringbone_wood:{rate:8.50,unit:"sf"}, chevron_wood:{rate:9.50,unit:"sf"}, cork_floating:{rate:3.75,unit:"sf"}, cork_glue:{rate:6.00,unit:"sf"}
+  carpet_stretch:{rate:2.00,unit:"sf"}, refinish:{rate:7.00,unit:"sf"}, tile:{rate:12.00,unit:"sf"}, tile_large:{rate:15.00,unit:"sf"}, lvt_gluedown:{rate:3.50,unit:"sf"},
+  engineered_wood_glue:{rate:6.50,unit:"sf"}, herringbone:{rate:6.50,unit:"sf"}, herringbone_laminate:{rate:5.00,unit:"sf"},
+  herringbone_wood:{rate:9.00,unit:"sf"}, chevron_wood:{rate:10.00,unit:"sf"}, cork_floating:{rate:3.75,unit:"sf"}, cork_glue:{rate:6.00,unit:"sf"}
 };
 const REMOVAL = {
   none:{label:"Nothing / bare concrete",rate:0,unit:"sf"},
@@ -605,7 +605,7 @@ function renderCatalog(){
     if(p.cardImg||p.img){const im=document.createElement("img");im.alt=p.name+" "+p.color;im.loading="lazy";im.className="photo";
       im.src=imgUrl(p.img||p.cardImg,1000);im.onerror=()=>{im.replaceWith(cv);thumb(cv,p)};c.append(im)}
     else {c.append(cv);thumb(cv,p)}
-    const lab=LABOR[p.labor];const inst=lab.unit==="sy"?lab.rate/9:lab.rate;
+    const lab=LABOR[laborKey(p)]||LABOR[p.labor];const inst=lab.unit==="sy"?lab.rate/9:lab.rate;
     const ci=S.colorOf[p.h]||0;
     const colorSel=p.colors&&p.colors.length>1?`<span class="meta"><b>${esc(p.color)}</b> · ${p.colors.length} colors, tap to preview</span><div class="sws" data-h="${p.h}">${p.colors.map((k,i)=>`<button type="button" class="swt" data-i="${i}" aria-pressed="${i===ci}" title="${esc(titleCase(k[0]))}" aria-label="${esc(titleCase(k[0]))}"><img loading="lazy" alt="" src="${imgUrl(k[1],240)}" onerror="this.style.visibility='hidden'"><span>${esc(titleCase(k[0]))}</span></button>`).join("")}</div>`:`<span class="meta">${esc(p.color)}</span>`;
     c.insertAdjacentHTML("beforeend",`<div class="body"><span class="kind">${p.vendor?esc(p.vendor)+" · ":""}${p.kind}</span><span class="title">${esc(p.name)}</span>
@@ -721,8 +721,11 @@ function laborKey(p){const pat=p.pattern||"standard";
   if(p.cat==="lvp")return pat==="standard"?p.labor:"herringbone";
   if(p.cat==="laminate")return pat==="standard"?p.labor:"herringbone_laminate";
   if(p.cat==="wood"){if(pat==="herringbone")return "herringbone_wood";if(pat==="chevron")return "chevron_wood";return S.sub==="wood"?"engineered_wood":"engineered_wood_glue"}
+  if(p.cat==="tile"&&isLargeTile(p))return "tile_large";
   return p.labor}
-const LKNAME={herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down over concrete",engineered_wood:"nailed or floating over wood subfloor"};
+// Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
+function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
+const LKNAME={tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down over concrete",engineered_wood:"nailed or floating over wood subfloor"};
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
