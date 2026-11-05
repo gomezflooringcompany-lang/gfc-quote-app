@@ -19,8 +19,8 @@ var MAX_ACTIVITY_ROWS = 50000;
 
 var COLS = {
   Activity: ['Time', 'Who', 'Email', 'Phone', 'ZIP', 'Event', 'Detail', 'Source', 'Visitor', 'Session'],
-  Quotes: ['Time', 'Type', 'Name', 'Email', 'Phone', 'ZIP', 'City', 'Total', 'Private pricing', 'Best time', 'Summary', 'Visitor'],
-  Leads: ['Time', 'Name', 'Email', 'Phone', 'ZIP', 'Logged-in customer', 'Interests', 'Visitor']
+  Quotes: ['Time', 'Type', 'Name', 'Email', 'Phone', 'ZIP', 'City', 'Total', 'Private pricing', 'Best time', 'Summary', 'Visitor', 'Job address'],
+  Leads: ['Time', 'Name', 'Email', 'Phone', 'ZIP', 'Logged-in customer', 'Interests', 'Visitor', 'Job address']
 };
 
 // ---------- one-time setup (run from the editor) ----------
@@ -88,11 +88,11 @@ function handle_(d) {
     append_(ss.getSheetByName('Activity'), rows);
     if (kind === 'quote') append_(ss.getSheetByName('Quotes'), [[now, 'Quote', clip_(q.name || who.name, 80), clip_(who.email, 120),
       clip_(q.phone || who.phone, 40), clip_(who.zip, 10), clip_(q.city, 60), num_(q.total), q.priv ? 'YES' : '', clip_(q.best, 40),
-      clip_(q.summary, 45000), vid]]);
+      clip_(q.summary, 45000), vid, clip_(who.addr, 200)]]);
     if (kind === 'sample') append_(ss.getSheetByName('Quotes'), [[now, 'Samples', clip_(s.name || who.name, 80), clip_(who.email, 120),
-      clip_(s.phone || who.phone, 40), clip_(who.zip, 10), clip_(s.address, 200), '', '', '', clip_(s.summary, 45000), vid]]);
+      clip_(s.phone || who.phone, 40), clip_(who.zip, 10), clip_(s.address, 200), '', '', '', clip_(s.summary, 45000), vid, clip_(s.address || who.addr, 200)]]);
     if (kind === 'lead') append_(ss.getSheetByName('Leads'), [[now, clip_(who.name, 80), clip_(who.email, 120), clip_(who.phone, 40),
-      clip_(who.zip, 10), who.login ? 'YES' : '', clip_(d.interests, 2000), vid]]);
+      clip_(who.zip, 10), who.login ? 'YES' : '', clip_(d.interests, 2000), vid, clip_(who.addr, 200)]]);
     trim_(ss.getSheetByName('Activity'));
   } finally {
     lock.releaseLock();
@@ -141,6 +141,7 @@ function contact_(who, phone) {
   var p = phone || who.phone;
   return '<p>' + (who.email ? 'Email: <a href="mailto:' + esc_(who.email) + '">' + esc_(who.email) + '</a><br>' : '') +
     (p ? 'Phone: <a href="tel:' + esc_(String(p).replace(/[^\d+]/g, '')) + '">' + esc_(p) + '</a><br>' : '') +
+    (who.addr ? 'Job address: ' + esc_(who.addr) + '<br>' : '') +
     (who.zip ? 'ZIP: ' + esc_(who.zip) : '') + '</p>';
 }
 
@@ -215,6 +216,9 @@ function book_() {
   }
   Object.keys(COLS).forEach(function (name) {
     var sh = ss.getSheetByName(name);
+    if (sh && sh.getLastColumn() < COLS[name].length) {
+      sh.getRange(1, 1, 1, COLS[name].length).setValues([COLS[name]]).setFontWeight('bold');
+    }
     if (!sh) {
       sh = ss.insertSheet(name);
       sh.appendRow(COLS[name]);
