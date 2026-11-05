@@ -224,7 +224,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <label id="padRow" hidden>Carpet pad (you need new pad under new carpet)<select id="pad"></select></label>
         <label id="polyRow" hidden>Moisture barrier for your waterproof vinyl (poly film)<select id="uPoly"><option value="mohawk">Mohawk MoistureBarrier poly film (recommended)</option><option value="shaw">Shaw TotalWorx 6 mil poly film</option></select></label>
         <label id="lamRow" hidden>Underlayment for your laminate (foam)<select id="uLam"><option value="mohawk">Mohawk Platinum 3mm performance foam (recommended)</option><option value="shaw">Shaw TotalWorx Silent Step Ultra foam</option></select></label>
-        <label id="glueRow" hidden>Adhesive for your glued-down wood floor (sold by the bucket, 4 gallons)<select id="uGlue"><option value="s35">Shaw 35 MC with moisture control, $217.49 per bucket (recommended)</option><option value="sure">Shaw Urebond Enhanced, $164.99 per bucket</option><option value="mohawk">Mohawk TimberStrong, $194.49 per bucket</option></select><span class="note" id="glueNote"></span></label>
+        <label id="glueRow" hidden>Adhesive for your glued-down wood floor (sold by the bucket, 4 gallons)<select id="uGlue"></select><span class="note" id="glueNote"></span></label>
         <label>Any cracks, bumps or dips in the floor underneath?<select id="prepYN"><option value="no">No, it's flat</option><option value="yes">Yes</option><option value="unsure">Not sure</option></select></label>
         <label id="prepRow">What kind?<select id="prep"><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option></select></label>
         <label>Baseboards and trim<select id="trim"><option value="quarter">Keep my baseboards, add new quarter round</option><option value="baseboard">Remove my baseboards and install new ones</option></select></label>
@@ -460,9 +460,21 @@ function accBrand(){return ACC[S.acc]||ACC.mohawk}
 // clip-on moisture-control trowel (36 for 3/8 in and thinner); up to 60 sq ft/gal as adhesive only.
 // We plan at 30/gal = 120/pail so customers don't run short. Cork layer is bonded at the
 // adhesive-only rate (60/gal = 240/pail). Urebond / TimberStrong: no published rate found, same plan used.
-const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",sf:120,corkSf:240,price:217.49},
- sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:120,corkSf:240,price:164.99},
- mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:120,corkSf:240,price:194.49}};
+const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",short:"Shaw 35 MC with moisture control",sf:120,corkSf:240,price:217.49,rec:1},
+ sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",short:"Shaw Urebond Enhanced",sf:120,corkSf:240,price:164.99},
+ mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",short:"Mohawk TimberStrong",sf:120,corkSf:240,price:194.49},
+ // GalleherDuffy line (store prices, tag galleher-l04; not MAP brands, all >= 25% margin). All are adhesive + moisture control
+ // in one coat. TDS moisture-control rate is 30-35 sq ft/gal (SikaBond T21, Bostik Vapor-Lock, Mapei 995); we plan 30/gal = 120
+ // per 4 gal bucket, and 45/gal (180 per bucket) as adhesive only for the cork layer (T21 TDS 45-50, Mapei 995 40-55).
+ t21:{label:"Sika",name:"SikaBond T21 urethane adhesive + moisture vapor reduction, 4 gal",short:"SikaBond T21 with moisture control",sf:120,corkSf:180,price:208.19,h:"sikabond-t21-urethane-adhesive-moisture-vapor-reduction-4-gal"},
+ t100:{label:"Sika",name:"SikaBond T100 all-in-one wood flooring adhesive, 4 gal",short:"SikaBond T100 all-in-one",sf:120,corkSf:180,price:246.65,h:"sikabond-t100-all-in-one-wood-flooring-adhesive-4-gal"},
+ bvl:{label:"Bostik",name:"Bostik Vapor-Lock hardwood adhesive, moisture + sound control, 4 gal",short:"Bostik Vapor-Lock with moisture + sound control",sf:120,corkSf:180,price:233.29,h:"bostik-vapor-lock-hardwood-adhesive-moisture-control-sound-reduction-membrane-4-gal"},
+ bgf:{label:"Bostik",name:"Bostik GreenForce Advance adhesive + moisture control membrane, 4 gal",short:"Bostik GreenForce Advance with moisture control",sf:120,corkSf:180,price:235.01,h:"bostik-greenforce-advance-tri-linking-adhesive-and-moisture-control-membrane-4-gal"},
+ befa:{label:"Bostik",name:"Bostik EFA+ wood flooring adhesive + moisture retarder, 4 gal",short:"Bostik EFA+ with moisture retarder",sf:120,corkSf:180,price:195.11,h:"bostik-efa-wood-flooring-adhesive-moisture-retarder-4-gal"},
+ m995:{label:"Mapei",name:"Mapei Ultrabond ECO 995 moisture-control wood adhesive, 4 gal",short:"Mapei Ultrabond ECO 995 with moisture control",sf:120,corkSf:180,price:214.79,h:"mapei-ultrabond-995-premium-moisture-control-wood-adhesive-4-gal"},
+ m985:{label:"Mapei",name:"Mapei Ultrabond ECO 985 hybrid wood floor adhesive, 4 gal",short:"Mapei Ultrabond ECO 985",sf:120,corkSf:180,price:210.09,h:"mapei-ultrabond-eco-985-hybrid-polymer-based-wood-floor-adhesive-4-gal"},
+ aspen:{label:"Taylor",name:"Taylor Aspen 90% moisture barrier engineered wood adhesive, 4 gal",short:"Taylor Aspen with moisture barrier",sf:120,corkSf:180,price:154.62,h:"taylor-aspen-90-moisture-barrier-engineered-hardwood-adhesive-4-gal"}};
+function glueOpts(){const bs=[...new Set(Object.values(GLUES).map(g=>g.label))];return bs.map(b=>`<optgroup label="${b}">`+Object.entries(GLUES).filter(([,g])=>g.label===b).map(([k,g])=>`<option value="${k}">${g.short}, ${money2(g.price)} per bucket${g.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("")}
 function glueSel(){return GLUES[S.uGlue2]||GLUES.s35}
 function uB(k){return ACC[S[k]]||ACC.mohawk}
 function polyRolls(sf){const ps=uB("uPoly").poly;if(ps.length<2){const n=Math.ceil(sf/ps[0].sf);return {txt:`${n} roll${n>1?"s":""} of ${ps[0].name}`,cost:n*ps[0].price}}
@@ -899,7 +911,7 @@ $("sampleBtn").onclick=()=>{
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
 $("pad").innerHTML=["Mohawk","Shaw"].filter(b=>PADS.some(x=>x.brand===b)).map(b=>`<optgroup label="${b}">`+PADS.filter(x=>x.brand===b).map(x=>`<option value="${x.id}">${x.name.replace(/^(Mohawk|Shaw TotalWorx) /,"")}, ${money2(x.price)}/sq ft${x.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("");$("pad").addEventListener("change",()=>{S.cpad=$("pad").value;save();track("pad",S.cpad);renderQuote();flashTotal()});
-$("sub").addEventListener("change",()=>extrasUI());["uPoly","uLam"].forEach(k=>$(k).addEventListener("change",()=>{S[k]=$(k).value;save();track(k,S[k]);renderQuote();flashTotal()}));$("uGlue").addEventListener("change",()=>{S.uGlue2=$("uGlue").value;save();track("glue",S.uGlue2);extrasUI();renderQuote();flashTotal()});$("floor2").addEventListener("change",()=>{S.floor2=$("floor2").value;save();track("floor2",S.floor2);extrasUI();renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);extrasUI();renderQuote();flashTotal()});
+$("sub").addEventListener("change",()=>extrasUI());["uPoly","uLam"].forEach(k=>$(k).addEventListener("change",()=>{S[k]=$(k).value;save();track(k,S[k]);renderQuote();flashTotal()}));$("uGlue").innerHTML=glueOpts();$("uGlue").addEventListener("change",()=>{S.uGlue2=$("uGlue").value;save();track("glue",S.uGlue2);extrasUI();renderQuote();flashTotal()});$("floor2").addEventListener("change",()=>{S.floor2=$("floor2").value;save();track("floor2",S.floor2);extrasUI();renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);extrasUI();renderQuote();flashTotal()});
 ["trim","prep","furn","hasStairs","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
 const DB={url:"",key:"",company:"gfc"};
