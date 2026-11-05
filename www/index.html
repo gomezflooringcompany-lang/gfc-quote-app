@@ -219,7 +219,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <span class="note" id="zipNote"></span>
         <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
         <label id="floor2Row" hidden>Is your wood floor going on a second floor (upstairs)?<select id="floor2"><option value="no">No, first floor</option><option value="yes">Yes, second floor</option></select></label>
-        <label id="corkRow" hidden>Add cork underlayment for sound reduction? Recommended on second floors, but optional: it quiets footsteps for the room below<select id="cork"><option value="no">No cork (optional)</option><option value="c3">Yes, 3mm cork, Hush III (recommended)</option><option value="c6">Yes, 6mm cork (most sound control)</option></select></label>
+        <label id="corkRow" hidden>Add cork underlayment for sound reduction? Recommended on second floors, but optional: it reduces (does not eliminate) footstep noise for the room below<select id="cork"><option value="no">No cork (optional)</option><option value="c3">Yes, 3mm cork, Hush III (recommended)</option><option value="c6">Yes, 6mm cork (most sound reduction)</option></select></label>
         <label id="padRow" hidden>Carpet pad (you need new pad under new carpet)<select id="pad"></select></label>
         <label id="polyRow" hidden>Moisture barrier for your waterproof vinyl (poly film)<select id="uPoly"><option value="mohawk">Mohawk MoistureBarrier poly film (recommended)</option><option value="shaw">Shaw TotalWorx 6 mil poly film</option></select></label>
         <label id="lamRow" hidden>Underlayment for your laminate (foam)<select id="uLam"><option value="mohawk">Mohawk Platinum 3mm performance foam (recommended)</option><option value="shaw">Shaw TotalWorx Silent Step Ultra foam</option></select></label>
@@ -776,7 +776,7 @@ function calc(){
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
       add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}`,0,l);
-      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.glue+=a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Quiets footsteps for the floor below`,0,a*RATES.corkGlue)}
+      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.glue+=a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Reduces footstep noise for the floor below (reduces, does not eliminate)`,0,a*RATES.corkGlue)}
       if(p.cat==="carpet")need.pad+=buy;
       if(p.cat==="laminate")need.lam+=a;
       if(p.cat==="lvp")need.poly+=a;
