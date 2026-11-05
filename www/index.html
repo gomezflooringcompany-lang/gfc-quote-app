@@ -101,7 +101,16 @@ details.tut[open] summary::after{content:"–"}
 .viz svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .handle{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(255,255,255,.9);border:3px solid var(--accent);touch-action:none;cursor:grab}
 .handle::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--accent)}
-.swatches{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.swatches{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;padding-top:6px}
+.myfl{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.myfl .chips{gap:6px}
+.mychip{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:13px;max-width:100%}
+.mychip>span{padding:5px 4px 5px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.mychip.on{border-color:var(--ink);font-weight:600}
+.mychip button,.swx{border:0;background:none;color:var(--ink);font:inherit;font-size:16px;line-height:1;cursor:pointer;padding:6px 10px 6px 6px;border-radius:999px}
+.swwrap{position:relative;flex:0 0 auto}
+.swx{position:absolute;top:-6px;right:-6px;width:24px;height:24px;padding:0;background:var(--surface);border:1px solid var(--line);font-size:14px;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.linkbtn{border:0;background:none;padding:0;color:var(--ink);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
 .sw{flex:0 0 auto;width:74px;border:2px solid transparent;border-radius:8px;padding:0;background:none;cursor:pointer;color:var(--ink);font:inherit;font-size:11px;text-align:center}
 .sw canvas{display:block;width:70px;height:48px;border-radius:6px}
 .sw[aria-pressed="true"]{border-color:var(--accent)}
@@ -164,6 +173,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     <div class="chips" id="cats"></div>
     <div class="row"><div class="srch"><input id="search" type="search" placeholder="Search a style, brand or color" aria-label="Search floors" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sugg"><div class="sugg" id="sugg" role="listbox" hidden></div></div>
       <select id="sort" aria-label="Sort" style="width:auto"><option value="">Sort: featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
+    <div class="myfl" id="myFloors" hidden></div>
     <span class="note" id="count"></span>
     <div class="grid" id="catalog"></div>
     <button class="btn" id="more" hidden>Show more floors</button>
@@ -261,8 +271,9 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
       <span class="note" id="vizBrandNote" hidden></span>
       <div class="vizrow" id="vizList"></div>
       <div class="srch"><input id="vizSearch" type="search" placeholder="Search by brand, style or color" aria-label="Try another floor" autocomplete="off"><div class="sugg" id="vizSugg" role="listbox" hidden></div></div>
-      <span class="note">Floors you've tried (tap to compare):</span>
+      <span class="note" id="vizSwNote">Your floors: tap one to see it in your room. Tap ✕ to remove it.</span>
       <div class="swatches" id="vizSw"></div>
+      <div class="row"><button class="btn small" type="button" id="vizAdd">+ Add a floor</button><button class="linkbtn" type="button" id="vizClear">Clear floors not used in a room</button></div>
       <button class="btn" type="button" id="cmpBtn">Compare 2 floors side by side</button>
       <div id="cmpPanel" hidden style="display:grid;gap:10px">
         <div class="two"><label>Left side<select id="cmpA"></select></label><label>Right side<select id="cmpB"></select></label></div>
@@ -528,6 +539,32 @@ function catalogList(){
   if(sort==="high") list=list.slice().sort((a,b)=>(b.p||b.sample?.price||0)-(a.p||a.sample?.price||0));
   return list;
 }
+// ---------- MY FLOORS: the floors a customer picked or tried; they can add and remove them ----------
+function myFloors(){return [...new Set([S.chosen,...(S.picked||[]),...S.rooms.map(r=>r.floor)])].filter(Boolean).filter(id=>P(id)&&P(id).id===id)}
+function roomsUsing(id){return S.rooms.filter(r=>r.floor===id)}
+function addFloor(id){S.picked=(S.picked||[]).filter(x=>x!==id);S.picked.unshift(id);S.picked=S.picked.slice(0,12);save()}
+function removeFloor(id){const all=myFloors();if(all.length<2){toast("Pick another floor first. You need at least one.");return}
+  const rest=all.filter(x=>x!==id),repl=(S.chosen!==id&&rest.includes(S.chosen))?S.chosen:rest[0];
+  S.picked=(S.picked||[]).filter(x=>x!==id);
+  const used=roomsUsing(id);used.forEach(r=>r.floor=repl);
+  if(S.chosen===id)S.chosen=repl;
+  if(typeof vizProduct!=="undefined"&&vizProduct&&vizProduct.id===id)vizProduct=P(repl);
+  if(typeof vizCompare!=="undefined"&&vizCompare&&(vizCompare.id===id||vizCompare.id===vizProduct.id))vizCompare=null;
+  track("remove",id);save();
+  const rp=P(repl);toast(used.length?`Removed. ${used.map(r=>r.name).join(", ")} now ${used.length>1?"use":"uses"} ${rp.name}${rp.color?", "+rp.color:""}`:"Removed");
+  refreshFloors()}
+function clearUnused(){const keep=new Set([S.chosen,...S.rooms.map(r=>r.floor)]);const n=myFloors().filter(id=>!keep.has(id)).length;
+  if(!n){toast("Nothing to clear. Every floor here is used in a room.");return}
+  S.picked=(S.picked||[]).filter(id=>keep.has(id));if(typeof vizProduct!=="undefined"&&vizProduct&&!keep.has(vizProduct.id))vizProduct=P(S.chosen);
+  if(typeof vizCompare!=="undefined")vizCompare=null;track("clear",n);save();toast(`Removed ${n} floor${n>1?"s":""}`);refreshFloors()}
+function refreshFloors(){renderMyFloors();if($("catalog")){const y=window.scrollY;renderCatalog();window.scrollTo(0,y)}
+  if(typeof renderRooms==="function"&&$("rooms"))renderRooms();if(typeof renderVizControls==="function")try{renderVizControls();renderViz()}catch(e){}
+  if(typeof renderQuote==="function")try{renderQuote()}catch(e){}}
+function renderMyFloors(){const el=$("myFloors");if(!el)return;const ids=myFloors();
+  if(ids.length<2&&!(S.picked||[]).length){el.hidden=true;return}el.hidden=false;
+  el.innerHTML=`<span class="note"><b>Your floors (${ids.length})</b>. Tap ✕ to remove one. Tap "+ Compare" on any floor below to add it.</span><div class="chips">${ids.map(id=>{const p=P(id),n=roomsUsing(id).length;
+    return `<span class="mychip${id===S.chosen?" on":""}" title="${esc(p.name)}"><span>${esc(p.name)}${p.color?", "+esc(p.color):""}${n?` · ${n} room${n>1?"s":""}`:""}</span>${ids.length>1?`<button type="button" data-rm="${esc(id)}" aria-label="Remove ${esc(p.name)}">✕</button>`:""}</span>`}).join("")}</div>${ids.length>2?'<button class="linkbtn" type="button" id="myClear" style="justify-self:start">Clear floors not used in a room</button>':""}`;
+  el.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>removeFloor(b.dataset.rm));const c=$("myClear");if(c)c.onclick=clearUnused}
 function renderCatalog(){
   const el=$("catalog");el.innerHTML="";
   const list=catalogList();
@@ -556,10 +593,14 @@ function renderCatalog(){
     sb.onclick=()=>{S.samples=S.samples||[];if(has)S.samples=S.samples.filter(x=>x!==p.id);else if(S.samples.length>=3){toast("Up to 3 samples for $25");return}else{S.samples.push(p.id);track("sample",p.id)}save();renderCatalog();renderSamples()};
     const b=document.createElement("button");b.className="btn small "+(S.chosen===p.id?"primary":"");b.style.margin="0 12px 12px";
     b.textContent=S.chosen===p.id?"Chosen":"Use this floor";
-    b.onclick=()=>{track("use",p.id);S.chosen=p.id;S.picked=(S.picked||[]).filter(i=>i!==p.id);S.picked.unshift(p.id);S.picked=S.picked.slice(0,8);
+    b.onclick=()=>{track("use",p.id);S.chosen=p.id;addFloor(p.id);
       S.rooms.forEach(r=>r.floor=p.id);
       S.done=S.done||{};S.done.floors=1;save();renderCatalog();go("measure");toast("Step 1 done ✓ Now measure your rooms.")};
-    if(p.service){b.textContent=S.chosen===p.id?"Chosen":"Choose refinishing";c.append(b)}else{c.append(sb);c.append(b)}el.append(c)});
+    const inMine=myFloors().includes(p.id);const cb=document.createElement("button");cb.className="btn small";cb.style.margin="0 12px 8px";
+    cb.textContent=inMine?"✓ In your floors":"+ Compare";cb.setAttribute("aria-pressed",inMine);
+    cb.onclick=()=>{if(inMine){removeFloor(p.id);return}addFloor(p.id);track("compareadd",p.id);toast("Added to your floors");renderMyFloors();const y=window.scrollY;renderCatalog();window.scrollTo(0,y)};
+    if(p.service){b.textContent=S.chosen===p.id?"Chosen":"Choose refinishing";c.append(b)}else{c.append(sb);c.append(cb);c.append(b)}el.append(c)});
+  renderMyFloors();
   $("more").hidden=list.length<=shown;
 }
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -933,12 +974,13 @@ function renderVizControls(){
   $("vizRoom").innerHTML=S.rooms.map((r,i)=>`<option value="${i}"${i===S.vizRoom?" selected":""}>${r.name} (${ft(r.lf,r.li).toFixed(0)}' x ${ft(r.wf,r.li2).toFixed(0)}')</option>`).join("");
   const el=$("vizSw");el.innerHTML="";
   if(!vizProduct)vizProduct=P(S.chosen);
-  const ids=[...new Set([S.chosen,...(S.picked||[]),...S.rooms.map(r=>r.floor)])].filter(Boolean);
-  let list=ids.map(P);if(list.length<4&&!CATALOG.length)list=SAMPLE;
+  const ids=myFloors();
+  let list=ids.map(P);if(list.length<4&&!CATALOG.length)list=SAMPLE;const canRm=CATALOG.length&&list.length>1;
   list.forEach(p=>{if(avgCache[p.id]===undefined)loadAvg(p,()=>{renderVizControls();renderViz()});
     const b=document.createElement("button");b.className="sw";b.setAttribute("aria-pressed",vizProduct.id===p.id);
     const cv=document.createElement("canvas");cv.width=140;cv.height=96;cv.getContext("2d").drawImage(makeTex(p).canvas,0,0,140*2.4,96*2.4,0,0,140,96);
-    b.append(cv);b.append(document.createTextNode(p.color||p.name));b.title=p.name;b.onclick=()=>{vizProduct=p;track("viz",p.id);renderVizControls();renderViz()};el.append(b)});
+    b.append(cv);b.append(document.createTextNode(p.color||p.name));b.title=p.name;b.onclick=()=>{vizProduct=p;track("viz",p.id);renderVizControls();renderViz()};
+    if(canRm){const w=document.createElement("span");w.className="swwrap";w.append(b);const x=document.createElement("button");x.type="button";x.className="swx";x.textContent="✕";x.setAttribute("aria-label","Remove "+p.name);x.onclick=()=>removeFloor(p.id);w.append(x);el.append(w)}else el.append(b)});
   if(list.length<2)el.insertAdjacentHTML("beforeend",'<p class="muted" style="font-size:13px;margin:6px 0 0">Search above to try more floors here.</p>');
   renderVizNow();renderVizList();renderCmp();
 }
@@ -953,7 +995,7 @@ function renderVizNow(){const p=vizProduct,el=$("vizNow");if(!p){el.innerHTML=""
     ${cols?`<div class="sws" style="margin-top:6px">${cols.map((k,i)=>`<button type="button" class="swt" data-i="${i}" aria-pressed="${i===ci}" title="${esc(titleCase(k[0]))}"><img loading="lazy" alt="" src="${imgUrl(k[1],240)}" onerror="this.style.visibility='hidden'"><span>${esc(titleCase(k[0]))}</span></button>`).join("")}</div>`:""}`;
   el.style.display="grid";el.style.gap="4px";
   el.querySelectorAll(".swt").forEach(t=>t.onclick=()=>{const i=+t.dataset.i;S.colorOf[h]=i;save();const np=P(h+"~"+i);if(np){vizProduct=np;track("vizcolor",np.id);addTried(np.id);renderVizControls();renderViz()}})}
-function addTried(id){S.picked=(S.picked||[]).filter(x=>x!==id);S.picked.unshift(id);S.picked=S.picked.slice(0,8);save()}
+function addTried(id){addFloor(id)}
 let vSugg=[];
 function renderVizSugg(){const el=$("vizSugg"),q=$("vizSearch").value.toLowerCase().trim();
   if(!CATALOG.length||q.length<2||document.activeElement!==$("vizSearch")){el.hidden=true;return}
@@ -981,7 +1023,7 @@ function renderVizList(){if(!CATALOG.length){$("vizCats").hidden=true;return}
   $("vizList").innerHTML=list.map(x=>{const i=S.colorOf[x.h]||0,k=x.k[i]||x.k[0]||["",x.img];const on=vizProduct&&vizProduct.h===x.h;
     return `<button type="button" data-h="${x.h}" aria-pressed="${on}"><img loading="lazy" alt="" src="${imgUrl(k[1]||x.img,300)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.t)}</b><br><small>${esc(titleCase(k[0]))} · ${money2(x.p)}/sq ft</small></span></button>`}).join("");
   $("vizList").querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=b.dataset.h;const np=P(h+"~"+(S.colorOf[h]||0));if(!np)return;vizProduct=np;addTried(np.id);track("viztry",np.id);renderVizControls();renderViz()})}
-function triedList(){const ids=[...new Set([vizProduct&&vizProduct.id,...(S.picked||[]),S.chosen,...S.rooms.map(r=>r.floor)])].filter(Boolean);return ids.map(P).filter(Boolean)}
+function triedList(){const ids=[...new Set([vizProduct&&vizProduct.id,...myFloors()])].filter(Boolean);return ids.map(P).filter(Boolean)}
 function cmpRow(p){const room=S.rooms[S.vizRoom]||S.rooms[0];const a=room?roomArea(room):0;const lr=LABOR[laborKey(p)]||LABOR[p.labor];const inst=lr.unit==="sy"?lr.rate/9:lr.rate;
   const est=a>0?(p.service?a*inst:Math.ceil(a*(1+(/herring|chevron/.test(laborKey(p))?0.22:p.waste)))*p.price*(1+RATES.tax)+a*inst):0;return {p,inst,est,a,room}}
 function renderCmp(){const on=!!vizCompare;$("cmpPanel").hidden=!on;$("cmpBtn").hidden=on;if(!on)return;
@@ -1003,6 +1045,8 @@ $("cmpB").onchange=()=>{vizCompare=P($("cmpB").value);renderCmp();renderViz()};
 $("cmpPickA").onclick=()=>{vizCompare=null;renderVizControls();renderViz();toast("Left one selected")};
 $("cmpPickB").onclick=()=>{vizProduct=vizCompare;vizCompare=null;renderVizControls();renderViz();toast("Right one selected")};
 $("cmpOff").onclick=()=>{vizCompare=null;renderVizControls();renderViz()};
+$("vizAdd").onclick=()=>{const i=$("vizSearch");i.scrollIntoView({behavior:"smooth",block:"center"});i.focus();toast("Search a brand, style or color to add a floor")};
+$("vizClear").onclick=clearUnused;
 function finalizeViz(){const p=vizProduct;if(!p)return;
   if($("vizAll").checked){S.rooms.forEach(r=>r.floor=p.id);S.chosen=p.id}else{const r=S.rooms[S.vizRoom]||S.rooms[0];if(r)r.floor=p.id}
   track("finalize",p.id);save()}
