@@ -63,18 +63,18 @@ var LABEL = {
   search:'Searched', suggest:'Picked suggestion', zip:'Entered ZIP', signup:'Gave contact info', 'private':'Turned on private pricing',
   viz:'Tried in room photo', vizcolor:'Changed color in photo', viztry:'Tried in room photo', vizbrand:'Picked brand', vizcat:'Picked type',
   compare:'Compared floors', finalize:'Locked in floor', done:'Finished step', update:'Changed', request:'Request',
-  stairphoto:'Added stair photo', refphoto:'Added floor photo', video:'Added video',
+  trade_open:'Opened the Trade Program page', trade_form:'Started the trade application', trade_apply:'SENT A TRADE APPLICATION', remove:'Removed floor', signin:'Sign-in box:', clear:'Cleared floors', compareadd:'Added to compare', stairphoto:'Added stair photo', refphoto:'Added floor photo', video:'Added video',
   'SIGN-UP':'SIGNED UP', 'QUOTE SENT':'SENT A QUOTE', 'SAMPLE REQUEST':'ASKED FOR SAMPLES'
 };
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function ago(t,now){var s=Math.max(0,Math.round((now-t)/1000));if(s<60)return s+'s ago';var m=Math.round(s/60);if(m<60)return m+' min ago';var h=Math.round(m/60);return h<24?h+' h ago':Math.round(h/24)+' d ago'}
 function clock(t){return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 function lab(e){return LABEL[e]||e}
-function isHot(e){return e==='SIGN-UP'||e==='QUOTE SENT'||e==='SAMPLE REQUEST'}
+function isHot(e){return e==='SIGN-UP'||e==='QUOTE SENT'||e==='SAMPLE REQUEST'||e==='trade_apply'}
 function sess(s,now,live){
   var dur=Math.max(1,Math.round((s.last-s.first)/60000));
   return '<div class="card"><div class="who">'+(live?'<span class="dot"></span>':'')+esc(s.who)+'</div>'+
-    '<div class="mute">'+(s.zip?'ZIP '+esc(s.zip)+' · ':'')+(s.src==='app'?'phone app':'website')+' · '+s.n+' actions · '+dur+' min</div>'+
+    '<div class="mute">'+(s.zip?'ZIP '+esc(s.zip)+' · ':'')+(s.src==='app'?'phone app':s.src==='trade'?'Trade Program page':'website')+' · '+s.n+' actions · '+dur+' min</div>'+
     (s.email||s.phone?'<div>'+(s.phone?'<a href="tel:'+esc(String(s.phone).replace(/[^\d+]/g,''))+'">'+esc(s.phone)+'</a> ':'')+(s.email?'<a href="mailto:'+esc(s.email)+'">'+esc(s.email)+'</a>':'')+'</div>':'')+
     '<div style="margin-top:4px"><span class="'+(isHot(s.lastEv)?'hot':'')+'">'+esc(lab(s.lastEv))+'</span> '+esc(s.lastDetail)+'</div>'+
     (s.quote&&s.lastEv!=='QUOTE SENT'?'<div class="hot">Quote sent: '+esc(s.quote)+'</div>':'')+
