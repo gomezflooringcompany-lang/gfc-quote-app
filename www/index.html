@@ -4,7 +4,11 @@
 <meta name="theme-color" content="#0F1F3D">
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png"><link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="GFC Instant Quote"><meta name="apple-mobile-web-app-capable" content="yes">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}.cam{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:16px}
+.cam .box{background:var(--surface);color:var(--ink);border-radius:14px;padding:14px;display:grid;gap:10px;width:min(640px,100%)}
+.cam video,.cam img{width:100%;max-height:60vh;object-fit:contain;background:#000;border-radius:10px;display:block}
+.cam .row{gap:8px;flex-wrap:wrap}
+</style>
 </head><body>
 <title>GFC Instant Quote</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -395,6 +399,14 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
 </nav>
 <div class="donebar" id="doneBar" hidden><button class="btn primary" id="doneBtn" type="button"></button></div>
 <div class="toast" id="toast" hidden></div>
+<div class="cam" id="cam" hidden role="dialog" aria-modal="true" aria-label="Take a photo"><div class="box">
+  <b id="camT">Take a photo</b>
+  <video id="camV" autoplay playsinline muted></video><img id="camI" alt="Your photo" hidden>
+  <span class="note" id="camMsg" hidden></span>
+  <div class="row"><button class="btn primary" type="button" id="camSnap">📷 Snap photo</button><button class="btn primary" type="button" id="camUse" hidden>Use this photo</button><button class="btn" type="button" id="camMore" hidden>Use and take another</button><button class="btn" type="button" id="camRetake" hidden>Retake</button></div>
+  <div class="row"><button class="linkbtn" type="button" id="camFile">Upload a file instead</button><button class="linkbtn" type="button" id="camX">Cancel</button></div>
+</div></div>
+
 
 <script>
 // ---------- PRICE DATA (labor from GFC price sheet; material = sample sell prices) ----------
@@ -1183,4 +1195,30 @@ function boot(){
 fetch("catalog.json").then(r=>r.ok?r.json():[]).then(d=>{CATALOG=d||[];CATALOG.forEach(x=>BYH[x.h]=x);boot()}).catch(()=>boot());
 </script>
 
+<script>
+// ---------- COMPUTER CAMERA: on desktops, "Take a photo" opens the webcam (phones use their own camera app) ----------
+(function(){const C={inp:null,stream:null,blob:null,bypass:false},$c=id=>document.getElementById(id);
+  const isPhone=()=>matchMedia("(pointer:coarse)").matches;
+  function stop(){if(C.stream){C.stream.getTracks().forEach(t=>t.stop());C.stream=null}}
+  function close(){stop();$c("cam").hidden=true;C.blob=null}
+  function mode(snapped){$c("camV").hidden=snapped;$c("camI").hidden=!snapped;$c("camSnap").hidden=snapped||!C.stream;["camUse","camMore","camRetake"].forEach(id=>$c(id).hidden=!snapped)}
+  async function start(){$c("camMsg").hidden=true;mode(false);
+    try{C.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}},audio:false});$c("camV").srcObject=C.stream;mode(false)}
+    catch(e){$c("camMsg").hidden=false;$c("camMsg").textContent="We couldn't open your camera (it may be blocked or missing). Allow camera access in your browser, or upload a photo file instead.";$c("camSnap").hidden=true;$c("camV").hidden=true}}
+  function open(inp){C.inp=inp;$c("camT").textContent=(inp.closest("label")||{}).textContent?.replace("📷","").trim()||"Take a photo";$c("cam").hidden=false;start()}
+  $c("camSnap").onclick=()=>{const v=$c("camV");if(!v.videoWidth)return;const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
+    c.toBlob(b=>{C.blob=b;$c("camI").src=URL.createObjectURL(b);mode(true)},"image/jpeg",0.85)};
+  $c("camRetake").onclick=()=>mode(false);
+  function use(again){if(!C.blob||!C.inp)return;const dt=new DataTransfer();dt.items.add(new File([C.blob],"photo-"+Date.now()+".jpg",{type:"image/jpeg"}));
+    C.inp.files=dt.files;C.inp.dispatchEvent(new Event("change",{bubbles:true}));C.blob=null;if(again)mode(false);else close()}
+  $c("camUse").onclick=()=>use(false);$c("camMore").onclick=()=>use(true);
+  $c("camX").onclick=close;
+  $c("camFile").onclick=()=>{const i=C.inp;close();if(i){C.bypass=true;i.click()}};
+  document.addEventListener("click",e=>{if(C.bypass){C.bypass=false;return}
+    const l=e.target.closest&&e.target.closest("label");if(!l)return;const inp=l.control;
+    if(!inp||inp.type!=="file"||!/^image/.test(inp.accept||""))return;
+    if(isPhone()||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||typeof DataTransfer==="undefined")return;
+    e.preventDefault();open(inp)},true);
+})();
+</script>
 </body></html>
