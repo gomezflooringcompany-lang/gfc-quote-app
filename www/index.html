@@ -443,18 +443,17 @@ const ACC={
     lam:{name:"Mohawk Platinum 3mm underlayment",sf:100,price:55.59},trans:{lvp:{name:"Mohawk vinyl 4-in-1 molding",price:74.28},laminate:{name:"Mohawk 4-in-1 molding",price:74.28},wood:{name:"Mohawk wood 4-in-1 molding",price:90.44}},glue:{name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:140,price:194.49}},
   shaw:{label:"Shaw",poly:[{name:"Shaw TotalWorx 6 mil poly jumbo moisture barrier, 400 sq ft roll",sf:400,price:65.99},{name:"Shaw TotalWorx 6 mil poly moisture barrier, 100 sq ft roll",sf:100,price:16.49}],
     lam:{name:"Shaw TotalWorx Silent Step Ultra underlayment",sf:100,price:44.99},trans:{lvp:{name:"Shaw TotalWorx T-molding",price:64.09},laminate:{name:"Shaw TotalWorx T-molding",price:64.09},wood:{name:"Shaw TotalWorx T-molding",price:64.09}},glue:{name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:140,price:164.99}}};
-// Carpet pad, priced per sq ft (store prices). Shaw = TotalWorx store prices; Mohawk = Georgia Carpet price minus 3 cents (no Xchange cost yet).
+// Carpet pad, priced per sq ft = the store's advertised price (MAP-safe). Mohawk pads come back once they have a store price
+// (they were Georgia Carpet minus 3 cents, and Georgia Carpet doesn't follow MAP).
 const PADS=[
- {id:"mfp",brand:"Mohawk",name:"Mohawk Fresh Protector 7/16 in, moisture barrier",price:0.68,rec:1},
- {id:"map",brand:"Mohawk",name:"Mohawk All Pet 15/32 in, moisture barrier (pets)",price:0.72},
  {id:"ssp",brand:"Shaw",name:"Shaw TotalWorx Support Plus",price:0.46},
- {id:"sruby",brand:"Shaw",name:"Shaw TotalWorx Ruby 8 lb, 7/16 in",price:0.51},
+ {id:"sruby",brand:"Shaw",name:"Shaw TotalWorx Ruby 8 lb, 7/16 in",price:0.51,rec:1},
  {id:"shope",brand:"Shaw",name:"Shaw TotalWorx Hope, memory foam",price:0.71},
  {id:"spet",brand:"Shaw",name:"Shaw TotalWorx Pet Perfect, moisture barrier (pets)",price:0.76},
  {id:"scharity",brand:"Shaw",name:"Shaw TotalWorx Charity, memory foam",price:0.87},
  {id:"scourage",brand:"Shaw",name:"Shaw TotalWorx Courage, foam + moisture barrier",price:1.14},
  {id:"svict",brand:"Shaw",name:"Shaw TotalWorx Victorious Plus, premium",price:1.21}];
-function padSel(){return PADS.find(x=>x.id===S.cpad)||PADS[0]}
+function padSel(){return PADS.find(x=>x.id===S.cpad)||PADS.find(x=>x.rec)||PADS[0]}
 function accBrand(){return ACC[S.acc]||ACC.mohawk}
 // Wood adhesive (Shaw first, per Luis). sf = sq ft per 4 gal pail for the wood layer.
 // 35 MC spec (Shaw TotalWorx): up to 30 sq ft/gal for engineered wood over 3/8 in thick with the
@@ -899,7 +898,7 @@ $("sampleBtn").onclick=()=>{
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
-$("pad").innerHTML=["Mohawk","Shaw"].map(b=>`<optgroup label="${b}">`+PADS.filter(x=>x.brand===b).map(x=>`<option value="${x.id}">${x.name.replace(/^(Mohawk|Shaw TotalWorx) /,"")}, ${money2(x.price)}/sq ft${x.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("");$("pad").addEventListener("change",()=>{S.cpad=$("pad").value;save();track("pad",S.cpad);renderQuote();flashTotal()});
+$("pad").innerHTML=["Mohawk","Shaw"].filter(b=>PADS.some(x=>x.brand===b)).map(b=>`<optgroup label="${b}">`+PADS.filter(x=>x.brand===b).map(x=>`<option value="${x.id}">${x.name.replace(/^(Mohawk|Shaw TotalWorx) /,"")}, ${money2(x.price)}/sq ft${x.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("");$("pad").addEventListener("change",()=>{S.cpad=$("pad").value;save();track("pad",S.cpad);renderQuote();flashTotal()});
 $("sub").addEventListener("change",()=>extrasUI());["uPoly","uLam"].forEach(k=>$(k).addEventListener("change",()=>{S[k]=$(k).value;save();track(k,S[k]);renderQuote();flashTotal()}));$("uGlue").addEventListener("change",()=>{S.uGlue2=$("uGlue").value;save();track("glue",S.uGlue2);extrasUI();renderQuote();flashTotal()});$("floor2").addEventListener("change",()=>{S.floor2=$("floor2").value;save();track("floor2",S.floor2);extrasUI();renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);extrasUI();renderQuote();flashTotal()});
 ["trim","prep","furn","hasStairs","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
