@@ -455,10 +455,14 @@ const PADS=[
  {id:"svict",brand:"Shaw",name:"Shaw TotalWorx Victorious Plus, premium",price:1.21}];
 function padSel(){return PADS.find(x=>x.id===S.cpad)||PADS[0]}
 function accBrand(){return ACC[S.acc]||ACC.mohawk}
-// Wood adhesive (Shaw first, per Luis). Coverage = moisture-control spread with the clip-on trowel.
-const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",sf:140,price:217.49},
- sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:140,price:164.99},
- mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:140,price:194.49}};
+// Wood adhesive (Shaw first, per Luis). sf = sq ft per 4 gal pail for the wood layer.
+// 35 MC spec (Shaw TotalWorx): up to 30 sq ft/gal for engineered wood over 3/8 in thick with the
+// clip-on moisture-control trowel (36 for 3/8 in and thinner); up to 60 sq ft/gal as adhesive only.
+// We plan at 30/gal = 120/pail so customers don't run short. Cork layer is bonded at the
+// adhesive-only rate (60/gal = 240/pail). Urebond / TimberStrong: no published rate found, same plan used.
+const GLUES={s35:{label:"Shaw",name:"Shaw TotalWorx 35 MC urethane wood adhesive + moisture control, 4 gal",sf:120,corkSf:240,price:217.49},
+ sure:{label:"Shaw",name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:120,corkSf:240,price:164.99},
+ mohawk:{label:"Mohawk",name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:120,corkSf:240,price:194.49}};
 function glueSel(){return GLUES[S.uGlue2]||GLUES.s35}
 function uB(k){return ACC[S[k]]||ACC.mohawk}
 function polyRolls(sf){const ps=uB("uPoly").poly;if(ps.length<2){const n=Math.ceil(sf/ps[0].sf);return {txt:`${n} roll${n>1?"s":""} of ${ps[0].name}`,cost:n*ps[0].price}}
@@ -776,7 +780,7 @@ function calc(){
     else{lines.push({label:`${r.name}: ${p.name}${p.color?", "+p.color:""}`,head:true});
       add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}`,0,l);
-      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.glue+=a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Reduces footstep noise for the floor below (reduces, does not eliminate)`,0,a*RATES.corkGlue)}
+      if(p.cat==="wood"&&corkOn()){need.cork+=a;need.corkGlue=(need.corkGlue||0)+a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Reduces footstep noise for the floor below (reduces, does not eliminate)`,0,a*RATES.corkGlue)}
       if(p.cat==="carpet")need.pad+=buy;
       if(p.cat==="laminate")need.lam+=a;
       if(p.cat==="lvp")need.poly+=a;
@@ -791,7 +795,7 @@ function calc(){
    if(need.cork){const ck=CORK[S.cork],n=Math.ceil(need.cork*1.05/ck.roll);add(`Cork underlayment: ${n} roll${n>1?"s":""}`,`${ck.name}, ${ck.roll} sq ft per roll, at ${money2(ck.price)}. For ${need.cork.toFixed(0)} sq ft`,n*ck.price,0)}
    if(need.lam){const u=uB("uLam").lam,n=Math.ceil(need.lam*1.05/u.sf);add(`Foam underlayment: ${n} roll${n>1?"s":""}`,`${u.name}, ${u.sf} sq ft per roll, at ${money2(u.price)}. Recommended for laminate: quieter, softer underfoot, built-in moisture barrier`,n*u.price,0)}
    if(need.poly){const pr=polyRolls(Math.ceil(need.poly*1.1));add(`Moisture barrier poly film: ${need.poly.toFixed(0)} sq ft`,`Moisture barrier for waterproof vinyl plank. ${pr.txt}`,pr.cost,0)}
-   if(need.glue){const g=glueSel(),n=Math.ceil(need.glue/g.sf);add(`Wood flooring adhesive: ${n} pail${n>1?"s":""}`,`${g.name} at ${money2(g.price)}, about ${g.sf} sq ft per pail. For glued-down engineered wood${need.cork?" and the cork underlayment":""}`,n*g.price,0)}}
+   if(need.glue){const g=glueSel(),cg=need.corkGlue||0,gal=need.glue/(g.sf/4)+cg/(g.corkSf/4),n=Math.ceil(gal/4);add(`Wood flooring adhesive: ${n} pail${n>1?"s":""} (4 gal each)`,`${g.name} at ${money2(g.price)}. Spread rate: about ${g.sf/4} sq ft per gallon (${g.sf} sq ft per pail) with the moisture-control trowel for ${need.glue.toFixed(0)} sq ft of wood${cg?`, plus about ${g.corkSf/4} sq ft per gallon to bond ${cg.toFixed(0)} sq ft of cork`:""}. About ${gal.toFixed(1)} gallons needed`,n*g.price,0)}}
   if(S.trim!=="none"&&hardPerim>0){
     if(S.trim==="quarter") add("New quarter round",`${hardPerim.toFixed(0)} ft of wall`,hardPerim*1.1*RATES.quarterMat,hardPerim*RATES.quarter);
     else if(S.trim==="reinstall") add("Remove and reinstall your baseboards",`${hardPerim.toFixed(0)} ft of wall`,0,hardPerim*RATES.baseReinstall);
