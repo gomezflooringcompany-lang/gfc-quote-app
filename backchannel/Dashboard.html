@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root{--bg:#F3F5F9;--card:#fff;--ink:#0F1F3D;--mute:#5d6b85;--line:#dfe4ee;--live:#12a150;--hot:#c2410c;--chip:#e8edf6}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b1324;--card:#121c33;--ink:#e8edf6;--mute:#9aa7c0;--line:#22304f;--chip:#1c2a47}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:0 0 4px}
+  h2{font-size:15px;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  .mute{color:var(--mute);font-size:13px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+  .card .who{font-weight:600;display:flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(18,161,80,.6);animation:p 1.6s infinite;flex:none}
+  @keyframes p{70%{box-shadow:0 0 0 8px rgba(18,161,80,0)}100%{box-shadow:0 0 0 0 rgba(18,161,80,0)}}
+  .chip{display:inline-block;background:var(--chip);border-radius:999px;padding:1px 8px;font-size:12px;margin:2px 4px 0 0}
+  .hot{color:var(--hot);font-weight:600}
+  a{color:inherit}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+  tr:first-child td{border-top:0}
+  td.t{white-space:nowrap;color:var(--mute);font-size:13px;width:1%}
+  details summary{cursor:pointer}
+  pre{white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace;margin:6px 0 0}
+  .empty{color:var(--mute);padding:12px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+  .wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><h1>Instant Quote live feed</h1><div class="mute">Private. Only you have this link. Updates every 10 seconds.</div></div>
+    <div class="mute" id="upd">Loading…</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="mute">Using it now</span><b id="sNow">–</b></div>
+    <div class="stat"><span class="mute">Visitors today</span><b id="sDay">–</b></div>
+    <div class="stat"><span class="mute">Signed up today</span><b id="sLead">–</b></div>
+    <div class="stat"><span class="mute">Quotes today</span><b id="sQuote">–</b></div>
+  </div>
+  <h2>Using it now</h2>
+  <div id="live"></div>
+  <h2>Latest quotes and sample requests</h2>
+  <div id="quotes"></div>
+  <h2>Last 24 hours</h2>
+  <div id="recent"></div>
+  <h2>Activity stream</h2>
+  <div class="wrap" id="events"></div>
+  <p class="mute" id="sheet"></p>
+</main>
+<script>
+var KEY = <?!= JSON.stringify(key) ?>;
+var LABEL = {
+  open:'Opened the app on', category:'Browsing', color:'Picked color', sample:'Added sample', use:'Chose floor',
+  search:'Searched', suggest:'Picked suggestion', zip:'Entered ZIP', signup:'Gave contact info', 'private':'Turned on private pricing',
+  viz:'Tried in room photo', vizcolor:'Changed color in photo', viztry:'Tried in room photo', vizbrand:'Picked brand', vizcat:'Picked type',
+  compare:'Compared floors', finalize:'Locked in floor', done:'Finished step', update:'Changed', request:'Request',
+  stairphoto:'Added stair photo', refphoto:'Added floor photo', video:'Added video',
+  'SIGN-UP':'SIGNED UP', 'QUOTE SENT':'SENT A QUOTE', 'SAMPLE REQUEST':'ASKED FOR SAMPLES'
+};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function ago(t,now){var s=Math.max(0,Math.round((now-t)/1000));if(s<60)return s+'s ago';var m=Math.round(s/60);if(m<60)return m+' min ago';var h=Math.round(m/60);return h<24?h+' h ago':Math.round(h/24)+' d ago'}
+function clock(t){return new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+function lab(e){return LABEL[e]||e}
+function isHot(e){return e==='SIGN-UP'||e==='QUOTE SENT'||e==='SAMPLE REQUEST'}
+function sess(s,now,live){
+  var dur=Math.max(1,Math.round((s.last-s.first)/60000));
+  return '<div class="card"><div class="who">'+(live?'<span class="dot"></span>':'')+esc(s.who)+'</div>'+
+    '<div class="mute">'+(s.zip?'ZIP '+esc(s.zip)+' · ':'')+(s.src==='app'?'phone app':'website')+' · '+s.n+' actions · '+dur+' min</div>'+
+    (s.email||s.phone?'<div>'+(s.phone?'<a href="tel:'+esc(String(s.phone).replace(/[^\d+]/g,''))+'">'+esc(s.phone)+'</a> ':'')+(s.email?'<a href="mailto:'+esc(s.email)+'">'+esc(s.email)+'</a>':'')+'</div>':'')+
+    '<div style="margin-top:4px"><span class="'+(isHot(s.lastEv)?'hot':'')+'">'+esc(lab(s.lastEv))+'</span> '+esc(s.lastDetail)+'</div>'+
+    (s.quote&&s.lastEv!=='QUOTE SENT'?'<div class="hot">Quote sent: '+esc(s.quote)+'</div>':'')+
+    '<div class="mute">'+ago(s.last,now)+'</div></div>';
+}
+function render(d){
+  var now=d.now, act=d.activeMin*60000;
+  var today=new Date(now);today.setHours(0,0,0,0);
+  var live=d.sessions.filter(function(s){return now-s.last<act});
+  var day=d.sessions.filter(function(s){return s.last>=today.getTime()});
+  document.getElementById('sNow').textContent=live.length;
+  document.getElementById('sDay').textContent=day.length;
+  document.getElementById('sLead').textContent=d.events.filter(function(e){return e.ev==='SIGN-UP'&&e.t>=today.getTime()}).length;
+  document.getElementById('sQuote').textContent=d.quotes.filter(function(q){return q.type==='Quote'&&q.t>=today.getTime()}).length;
+  document.getElementById('live').innerHTML=live.length?'<div class="grid">'+live.map(function(s){return sess(s,now,true)}).join('')+'</div>':'<div class="empty">Nobody is using the Instant Quote right now.</div>';
+  var rest=d.sessions.filter(function(s){return now-s.last>=act}).slice(0,24);
+  document.getElementById('recent').innerHTML=rest.length?'<div class="grid">'+rest.map(function(s){return sess(s,now,false)}).join('')+'</div>':'<div class="empty">No other visits in the last 24 hours.</div>';
+  document.getElementById('quotes').innerHTML=d.quotes.length?'<table>'+d.quotes.slice(0,15).map(function(q){
+    return '<tr><td class="t">'+clock(q.t)+'</td><td><b>'+esc(q.type)+(q.total?' $'+Number(q.total).toLocaleString('en-US'):'')+'</b>'+(q.priv?' <span class="chip">private pricing</span>':'')+
+      '<br>'+esc(q.name)+(q.city?' · '+esc(q.city):'')+(q.zip?' · '+esc(q.zip):'')+'<br>'+
+      (q.phone?'<a href="tel:'+esc(String(q.phone).replace(/[^\d+]/g,''))+'">'+esc(q.phone)+'</a> ':'')+(q.email?'<a href="mailto:'+esc(q.email)+'">'+esc(q.email)+'</a>':'')+
+      '<details><summary class="mute">Full request</summary><pre>'+esc(q.summary)+'</pre></details></td></tr>'}).join('')+'</table>':'<div class="empty">No quotes yet.</div>';
+  document.getElementById('events').innerHTML=d.events.length?'<table>'+d.events.slice(0,80).map(function(e){
+    return '<tr><td class="t">'+ago(e.t,now)+'</td><td><b>'+esc(e.who)+'</b> <span class="'+(isHot(e.ev)?'hot':'')+'">'+esc(lab(e.ev))+'</span> '+esc(e.d)+'</td></tr>'}).join('')+'</table>':'<div class="empty">No activity yet.</div>';
+  document.getElementById('sheet').innerHTML='Everything is also saved in your <a href="'+esc(d.sheet)+'">Google Sheet</a>.';
+  document.getElementById('upd').textContent='Updated '+new Date(now).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+}
+function load(){google.script.run.withSuccessHandler(render).withFailureHandler(function(){document.getElementById('upd').textContent='Could not refresh, retrying…'}).feed(KEY)}
+load();setInterval(load,10000);
+</script>
+</body>
+</html>
