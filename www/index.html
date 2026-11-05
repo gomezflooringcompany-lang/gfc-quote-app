@@ -759,12 +759,12 @@ function corkOn(){return S.floor2==="yes"&&!!S.cork&&S.cork!=="no"&&!!CORK[S.cor
 function laborKey(p){const pat=p.pattern||"standard";
   if(p.cat==="lvp")return pat==="standard"?p.labor:"herringbone";
   if(p.cat==="laminate")return pat==="standard"?p.labor:"herringbone_laminate";
-  if(p.cat==="wood"){if(pat==="herringbone")return "herringbone_wood";if(pat==="chevron")return "chevron_wood";return corkOn()?"engineered_wood_cork":S.floor2==="yes"?"engineered_wood":"engineered_wood_glue"}
+  if(p.cat==="wood"){if(pat==="herringbone")return "herringbone_wood";if(pat==="chevron")return "chevron_wood";return corkOn()?"engineered_wood_cork":"engineered_wood_glue"}
   if(p.cat==="tile"&&isLargeTile(p))return "tile_large";
   return p.labor}
 // Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
 function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
-const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down (first floor)",engineered_wood:"nailed or floating over wood subfloor"};
+const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down",engineered_wood:"nailed or floating over wood subfloor"};
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
