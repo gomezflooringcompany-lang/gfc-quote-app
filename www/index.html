@@ -180,7 +180,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
     <span class="note" id="count"></span>
     <div class="grid" id="catalog"></div>
     <button class="btn" id="more" hidden>Show more floors</button>
-    <p class="note">Floor and installation prices per square foot. Removal of your old floor, trim, stairs and other extras are added on the quote page (step 4), so you see every cost before you decide.</p>
+    <p class="note">Floor and installation prices per square foot. Removal of your old floor, trim, stairs and other extras are added in step 3, so you see every cost before you decide.</p>
     <div class="panel" id="samplePanel" style="display:grid;gap:10px">
       <b>Samples mailed to your home: $25 for up to 3</b>
       <span class="note" id="sampleList">Tap "+ Add sample" on up to 3 floors. We mail them so you can see the color in your own light. $25 for up to 3 samples.</span>
@@ -203,36 +203,10 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
 
   <!-- 2 MEASURE -->
   <section class="view" id="v-measure" hidden>
-    <div><button class="back" type="button" data-go="viz">‹ Back</button><div class="step">Step 3 of 3 · Your quote</div><h2>Measure your rooms</h2>
-      <p class="lead">Enter each room wall to wall, answer a few questions, and your instant quote is next. Not sure how to measure? Open the tape measure guide below.</p><p class="privbar" data-pb></p></div>
-    <details class="tut" id="tut">
-      <summary>How to measure with a tape measure (2 minutes)</summary>
-      <ol>
-        <li><b>Grab a tape measure</b>A 25 ft tape is best. A helper makes it easier, but you can do it alone.</li>
-        <li><b>Measure the long wall</b>Hook the tape on one wall at floor level, pull it straight to the opposite wall, and read the number. Example: <span class="tape">14' 7"</span> means 14 feet 7 inches. Always round up to the next inch.</li>
-        <li><b>Measure the short wall</b>Do the same the other way across the room.</li>
-        <li><b>Odd shape? Split it into boxes</b>
-          <svg viewBox="0 0 260 130" role="img" aria-label="An L-shaped room split into box A and box B">
-            <path d="M10 10 H170 V60 H250 V120 H10 Z" fill="none" stroke="currentColor" stroke-width="3"/>
-            <path d="M170 60 V120" stroke="currentColor" stroke-width="3" stroke-dasharray="6 5"/>
-            <text x="80" y="72" font-size="22" font-weight="700" fill="currentColor" text-anchor="middle">A</text>
-            <text x="210" y="98" font-size="22" font-weight="700" fill="currentColor" text-anchor="middle">B</text>
-          </svg>
-          Measure box A as the room, then add box B (or a closet) as the extra area.</li>
-        <li><b>Count doorways and stairs</b>Count the doorways where the new floor meets a different floor. Count your staircases.</li>
-        <li><b>Take 3 photos</b>One from each corner of the room, and one of the doorway. They help us confirm your price without a drive out.</li>
-      </ol>
-    </details>
-    <div class="panel" id="scanPanel" hidden style="display:grid;gap:8px">
-      <button class="btn primary" id="scanBtn">Measure a room with camera</button>
-      <span class="note">Walk slowly around the room and point the camera at every wall. The app measures the floor for you.</span>
-    </div>
-    <p class="note" id="scanNote">Camera measuring works in the Gomez Flooring app on iPhone Pro models. On other phones, use the tape measure guide.</p>
-    <div class="example" id="exampleNote">These two rooms are an example. Change them to your own rooms.</div>
-    <div id="rooms" class="view"></div>
-    <button class="btn" id="addRoom">+ Add another room</button>
+    <div><button class="back" type="button" data-go="viz">‹ Back</button><div class="step">Step 3 of 3 · Instant quote</div><h2>A few quick questions</h2>
+      <p class="lead">Tell us about your home (old floor, stairs, trim and so on), then tap the button for your instant quote.</p><p class="privbar" data-pb></p></div>
     <div class="panel qs" id="extrasPanel">
-      <b style="font-size:19px">A few quick questions</b>
+      <b style="font-size:19px">About your home</b>
       <span class="note">These add the rest of the costs (removal, trim, stairs and so on) to your quote. Not sure? Pick "not sure" and we confirm from your photos.</span>
       <div class="two">
         <label>Your ZIP code (where the floors go)<input id="jobZip" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="e.g. 91342"></label>
@@ -258,8 +232,8 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
 
   <!-- 3 VISUALIZE -->
   <section class="view" id="v-viz" hidden>
-    <div><button class="back" type="button" data-go="floors">‹ Back</button><div class="step">Step 2 of 3</div><h2>See it in your room</h2>
-      <p class="lead">Take or upload a photo of your room and drag the 4 dots to the corners of the floor. Compare, add or remove floors, then tap Next.</p><p class="privbar" data-pb></p></div>
+    <div><button class="back" type="button" data-go="floors">‹ Back</button><div class="step">Step 2 of 3</div><h2>See it and measure</h2>
+      <p class="lead">Take or upload a photo of your room and drag the 4 dots to the corners of the floor. Compare, add or remove floors, then measure your rooms below.</p><p class="privbar" data-pb></p></div>
     <div class="row">
       <label class="btn primary small" for="photoIn" style="display:inline-block;color:var(--accent-ink)">Take or upload a photo</label>
       <input id="photoIn" type="file" accept="image/*" capture="environment" hidden>
@@ -286,6 +260,36 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
       <label class="chk"><input type="checkbox" id="vizAll" checked> <span>Use this floor in every room</span></label>
     </div>
     <p class="note">Preview only. Furniture in the photo will be covered by the floor. Your photos stay on your phone unless you send them to us.</p>
+    <div id="measureBox" style="display:grid;gap:12px">
+    <h3 style="margin:8px 0 0;font-size:22px">Measure your rooms</h3>
+    <p class="lead" style="margin:0">Enter each room wall to wall. Not sure how? Open the tape measure guide.</p>
+    <details class="tut" id="tut">
+      <summary>How to measure with a tape measure (2 minutes)</summary>
+      <ol>
+        <li><b>Grab a tape measure</b>A 25 ft tape is best. A helper makes it easier, but you can do it alone.</li>
+        <li><b>Measure the long wall</b>Hook the tape on one wall at floor level, pull it straight to the opposite wall, and read the number. Example: <span class="tape">14' 7"</span> means 14 feet 7 inches. Always round up to the next inch.</li>
+        <li><b>Measure the short wall</b>Do the same the other way across the room.</li>
+        <li><b>Odd shape? Split it into boxes</b>
+          <svg viewBox="0 0 260 130" role="img" aria-label="An L-shaped room split into box A and box B">
+            <path d="M10 10 H170 V60 H250 V120 H10 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+            <path d="M170 60 V120" stroke="currentColor" stroke-width="3" stroke-dasharray="6 5"/>
+            <text x="80" y="72" font-size="22" font-weight="700" fill="currentColor" text-anchor="middle">A</text>
+            <text x="210" y="98" font-size="22" font-weight="700" fill="currentColor" text-anchor="middle">B</text>
+          </svg>
+          Measure box A as the room, then add box B (or a closet) as the extra area.</li>
+        <li><b>Count doorways and stairs</b>Count the doorways where the new floor meets a different floor. Count your staircases.</li>
+        <li><b>Take 3 photos</b>One from each corner of the room, and one of the doorway. They help us confirm your price without a drive out.</li>
+      </ol>
+    </details>
+    <div class="panel" id="scanPanel" hidden style="display:grid;gap:8px">
+      <button class="btn primary" id="scanBtn">Measure a room with camera</button>
+      <span class="note">Walk slowly around the room and point the camera at every wall. The app measures the floor for you.</span>
+    </div>
+    <p class="note" id="scanNote">Camera measuring works in the Gomez Flooring app on iPhone Pro models. On other phones, use the tape measure guide.</p>
+    <div class="example" id="exampleNote">These two rooms are an example. Change them to your own rooms.</div>
+    <div id="rooms" class="view"></div>
+    <button class="btn" id="addRoom">+ Add another room</button>
+    </div>
     <div class="panel" style="display:grid;gap:10px">
       <b>Room photos for your quote</b>
       <div class="photos" id="photoList"></div>
@@ -380,8 +384,8 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
 
 <nav class="tabs" aria-label="Steps">
   <button data-v="floors"><span class="n">1</span>Floors</button>
-  <button data-v="viz"><span class="n">2</span>See it</button>
-  <button data-v="measure"><span class="n">3</span>Quote</button>
+  <button data-v="viz"><span class="n">2</span>See it &amp; measure</button>
+  <button data-v="measure"><span class="n">3</span>Instant quote</button>
 </nav>
 <div class="donebar" id="doneBar" hidden><button class="btn primary" id="doneBtn" type="button"></button></div>
 <div class="toast" id="toast" hidden></div>
@@ -544,9 +548,9 @@ function catalogList(){
   return list;
 }
 // ---------- MY FLOORS: the floors a customer picked or tried; they can add and remove them ----------
-function myFloors(){return [...new Set([S.chosen,...(S.picked||[]),...S.rooms.map(r=>r.floor)])].filter(Boolean).filter(id=>P(id)&&P(id).id===id)}
+function myFloors(){return [...new Set([...(S.touched?[S.chosen]:[]),...(S.picked||[]),...(S.touched?S.rooms.map(r=>r.floor):[])])].filter(Boolean).filter(id=>P(id)&&P(id).id===id)}
 function roomsUsing(id){return S.rooms.filter(r=>r.floor===id)}
-function addFloor(id){S.picked=(S.picked||[]).filter(x=>x!==id);S.picked.unshift(id);S.picked=S.picked.slice(0,12);save()}
+function addFloor(id){if(!S.touched){S.touched=1;S.chosen=id;S.rooms.forEach(r=>r.floor=id)}S.picked=(S.picked||[]).filter(x=>x!==id);S.picked.unshift(id);S.picked=S.picked.slice(0,12);save()}
 function removeFloor(id){const all=myFloors();if(all.length<2){toast("Pick another floor first. You need at least one.");return}
   const rest=all.filter(x=>x!==id),repl=(S.chosen!==id&&rest.includes(S.chosen))?S.chosen:rest[0];
   S.picked=(S.picked||[]).filter(x=>x!==id);
@@ -597,7 +601,7 @@ function renderCatalog(){
     sb.onclick=()=>{S.samples=S.samples||[];if(has)S.samples=S.samples.filter(x=>x!==p.id);else if(S.samples.length>=3){toast("Up to 3 samples for $25");return}else{S.samples.push(p.id);track("sample",p.id)}save();renderCatalog();renderSamples()};
     const b=document.createElement("button");b.className="btn small "+(S.chosen===p.id?"primary":"");b.style.margin="0 12px 12px";
     b.textContent=S.chosen===p.id?"Chosen":"Use this floor";
-    b.onclick=()=>{track("use",p.id);S.chosen=p.id;addFloor(p.id);
+    b.onclick=()=>{track("use",p.id);S.touched=1;S.chosen=p.id;addFloor(p.id);
       S.rooms.forEach(r=>r.floor=p.id);
       S.done=S.done||{};S.done.floors=1;save();renderCatalog();go("viz");toast("Step 1 done ✓ Now see it in your room.")};
     const inMine=myFloors().includes(p.id);const cb=document.createElement("button");cb.className="btn small";cb.style.margin="0 12px 8px";
@@ -1064,6 +1068,7 @@ $("cmpOff").onclick=()=>{vizCompare=null;renderVizControls();renderViz()};
 $("vizAdd").onclick=()=>{const i=$("vizSearch");i.scrollIntoView({behavior:"smooth",block:"center"});i.focus();toast("Search a brand, style or color to add a floor")};
 $("vizClear").onclick=clearUnused;
 function finalizeViz(){const p=vizProduct;if(!p)return;
+  if(!S.touched){S.touched=1;$("vizAll").checked=true}
   if($("vizAll").checked){S.rooms.forEach(r=>r.floor=p.id);S.chosen=p.id}else{const r=S.rooms[S.vizRoom]||S.rooms[0];if(r)r.floor=p.id}
   track("finalize",p.id);save()}
 
@@ -1073,12 +1078,12 @@ function go(v){S.view=v;save();
   ["floors","measure","viz","quote"].forEach(k=>{$("v-"+k).hidden=k!==v});
   const tv=v==="quote"?"measure":v;document.querySelectorAll("nav.tabs button").forEach(b=>{if(b.dataset.v===tv)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   if(v==="floors"){renderCats();renderCatalog();renderSamples()}
-  if(v==="measure"){renderRooms();extrasUI()}
-  if(v==="viz"){renderVizControls();if(!basePixels)sampleRoom();else renderViz()}
+  if(v==="measure"){extrasUI()}
+  if(v==="viz"){renderRooms();renderVizControls();if(!basePixels)sampleRoom();else renderViz()}
   if(v==="quote"){gateUI();renderQuote();refUI()}
   doneUI();window.scrollTo(0,0);
 }
-const STEPS=["floors","viz","measure","quote"],NEXTLBL={floors:"Next: see it in your room ›",viz:"Next: measure for your quote ›",measure:"See my instant quote ›"};
+const STEPS=["floors","viz","measure","quote"],NEXTLBL={floors:"Next: see it in your room ›",viz:"Next: a few questions ›",measure:"See my instant quote ›"};
 function doneUI(){const v=S.view,bar=$("doneBar"),b=$("doneBtn");S.done=S.done||{};
   bar.hidden=!NEXTLBL[v];document.querySelector("main").classList.toggle("withdone",!!NEXTLBL[v]);
   if(NEXTLBL[v]){const ok=v!=="floors"||!!S.chosen;b.disabled=!ok;b.textContent=ok?NEXTLBL[v]:"Pick a floor above to continue"}
@@ -1086,7 +1091,8 @@ function doneUI(){const v=S.view,bar=$("doneBar"),b=$("doneBtn");S.done=S.done||
 $("doneBtn").onclick=()=>{const v=S.view,i=STEPS.indexOf(v);if(i<0||i>2)return;if(v==="viz")finalizeViz();S.done=S.done||{};S.done[v]=1;save();track("done",v);go(STEPS[i+1]);toast(v==="measure"?"Here's your instant quote ✓":"Step "+(i+1)+" done ✓")};
 document.querySelectorAll("[data-upd]").forEach(b=>b.onclick=()=>{const t=b.dataset.upd;track("update",t);
   if(t==="extras"){go("measure");const e=$("extrasPanel");e.scrollIntoView({behavior:"smooth",block:"start"});e.classList.remove("flash");void e.offsetWidth;e.classList.add("flash")}
-  else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Done":t==="viz"?"Try other floors, then tap Finalize":"Change your rooms, then tap Done")}});
+  else if(t==="measure"){go("viz");const e=$("measureBox");e.scrollIntoView({behavior:"smooth",block:"start"});toast("Change your rooms, then tap Next")}
+  else{go(t);toast(t==="floors"?"Pick a new floor or color, then tap Next":"Try other floors, then tap Next")}});
 function flashTotal(){if(S.view!=="quote"){extrasUI();return}const t=document.querySelector(".total");if(!t)return;t.classList.remove("flash");void t.offsetWidth;t.classList.add("flash");toast("Quote updated")}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{const t=b.dataset.v;go(t==="measure"&&S.done&&S.done.measure?"quote":t)});
 // search suggestions (all categories)
@@ -1131,6 +1137,7 @@ function boot(){
     const fix=id=>{if(id==="refinish"||fromCatalog(id))return id;const sp=SAMPLE.find(p=>p.id===id);return first(sp?sp.cat:"lvp")};
     S.rooms.forEach(r=>r.floor=fix(r.floor));S.chosen=fix(S.chosen);
     S.picked=(S.picked||[]).filter(id=>id==="refinish"||fromCatalog(id));S.samples=(S.samples||[]).filter(id=>fromCatalog(id));
+    if(S.touched==null)S.touched=!S.example||!!(S.done&&S.done.floors)||!!(S.picked||[]).length;
     if(S.example&&S.rooms[1]&&P(S.rooms[1].floor).cat!=="carpet")S.rooms[1].floor=first("carpet");
     save();
   }
