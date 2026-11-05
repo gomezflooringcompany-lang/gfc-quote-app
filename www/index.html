@@ -219,6 +219,7 @@ nav.tabs button.isdone .n{background:#1F7A4D;border-color:#1F7A4D;color:#fff}
         <span class="note" id="zipNote"></span>
         <label>Is the floor under your rooms concrete or wood?<select id="sub"><option value="concrete">Concrete (ground floor, slab)</option><option value="wood">Wood (upstairs or raised floor)</option><option value="unsure">Not sure</option></select></label>
         <label id="corkRow" hidden>Add cork sound underlayment under your wood floor? (recommended upstairs, quiets footsteps below)<select id="cork"><option value="no">No</option><option value="c3">Yes, 3mm cork (Hush III)</option><option value="c6">Yes, 6mm cork (most sound control)</option></select></label>
+        <label id="padRow" hidden>Carpet pad (you need new pad under new carpet)<select id="pad"></select></label>
         <label id="accRow" hidden>Underlayment and adhesive brand<select id="acc"><option value="mohawk">Mohawk (recommended)</option><option value="shaw">Shaw</option></select></label>
         <label>Any cracks, bumps or dips in the floor underneath?<select id="prepYN"><option value="no">No, it's flat</option><option value="yes">Yes</option><option value="unsure">Not sure</option></select></label>
         <label id="prepRow">What kind?<select id="prep"><option value="fix">A few cracks or bumps (patch)</option><option value="level">Dips or uneven areas (self-leveler)</option></select></label>
@@ -438,6 +439,18 @@ const ACC={
     lam:{name:"Mohawk Platinum 3mm underlayment",sf:100,price:55.59},trans:{lvp:{name:"Mohawk vinyl 4-in-1 molding",price:74.28},laminate:{name:"Mohawk 4-in-1 molding",price:74.28},wood:{name:"Mohawk wood 4-in-1 molding",price:90.44}},glue:{name:"Mohawk TimberStrong urethane wood adhesive, 4 gal",sf:140,price:194.49}},
   shaw:{label:"Shaw",poly:[{name:"Shaw TotalWorx 6 mil poly moisture barrier, 100 sq ft roll",sf:100,price:16.49}],
     lam:{name:"Shaw TotalWorx Silent Step Ultra underlayment",sf:100,price:44.99},trans:{lvp:{name:"Shaw TotalWorx T-molding",price:64.09},laminate:{name:"Shaw TotalWorx T-molding",price:64.09},wood:{name:"Shaw TotalWorx T-molding",price:64.09}},glue:{name:"Shaw TotalWorx Urebond Enhanced wood adhesive, 4 gal",sf:140,price:164.99}}};
+// Carpet pad, priced per sq ft (store prices). Shaw = TotalWorx store prices; Mohawk = Georgia Carpet price minus 3 cents (no Xchange cost yet).
+const PADS=[
+ {id:"mfp",brand:"Mohawk",name:"Mohawk Fresh Protector 7/16 in, moisture barrier",price:0.68,rec:1},
+ {id:"map",brand:"Mohawk",name:"Mohawk All Pet 15/32 in, moisture barrier (pets)",price:0.72},
+ {id:"ssp",brand:"Shaw",name:"Shaw TotalWorx Support Plus",price:0.46},
+ {id:"sruby",brand:"Shaw",name:"Shaw TotalWorx Ruby 8 lb, 7/16 in",price:0.51},
+ {id:"shope",brand:"Shaw",name:"Shaw TotalWorx Hope, memory foam",price:0.71},
+ {id:"spet",brand:"Shaw",name:"Shaw TotalWorx Pet Perfect, moisture barrier (pets)",price:0.76},
+ {id:"scharity",brand:"Shaw",name:"Shaw TotalWorx Charity, memory foam",price:0.87},
+ {id:"scourage",brand:"Shaw",name:"Shaw TotalWorx Courage, foam + moisture barrier",price:1.14},
+ {id:"svict",brand:"Shaw",name:"Shaw TotalWorx Victorious Plus, premium",price:1.21}];
+function padSel(){return PADS.find(x=>x.id===S.cpad)||PADS[0]}
 function accBrand(){return ACC[S.acc]||ACC.mohawk}
 function polyRolls(sf){const ps=accBrand().poly;if(ps.length<2){const n=Math.ceil(sf/ps[0].sf);return {txt:`${n} roll${n>1?"s":""} of ${ps[0].name}`,cost:n*ps[0].price}}
   const big=ps[0],small=ps[1];let nb=Math.floor(sf/big.sf),rest=sf-nb*big.sf,ns=Math.ceil(rest/small.sf);if(ns*small.price>big.price){nb++;ns=0}
@@ -746,7 +759,7 @@ const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:
 function calc(){
   const lines=[];let mat=0,lab=0;
   const add=(label,sub,m,l)=>{lines.push({label,sub,amt:m+l});mat+=m;lab+=l};
-  let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;const need={poly:0,lam:0,glue:0,cork:0};
+  let hardPerim=0,totalSf=0,anyRemoval=false,removedSf=0,boughtSf=0;const need={poly:0,lam:0,glue:0,cork:0,pad:0};
   S.rooms.forEach(r=>{
     const a=roomArea(r);if(a<=0)return;totalSf+=a;const p=P(r.floor);const lr=LABOR[p.labor];
     const lk=laborKey(p),lr2=LABOR[lk]||lr;const wst=/herring|chevron/.test(lk)?0.22:p.waste;const buy=Math.ceil(a*(1+wst));if(!p.service)boughtSf+=buy;const pp=privPrice(p),unit=pp||p.price;const m=buy*unit;const l=lr2.unit==="sy"?a/9*lr2.rate:a*lr2.rate;
@@ -755,6 +768,7 @@ function calc(){
       add(`Material purchased: ${buy} sq ft`,`${a.toFixed(0)} sq ft room + ${Math.round(wst*100)}% extra for cuts and waste${wst>p.waste?" (pattern layouts need more cuts)":""}, at ${money2(unit)}/sq ft${pp?" (your private Gomez Flooring price)":privOn()?". Ask us for your private price on this floor":""}`,m,0);
       add(`Installation: ${a.toFixed(0)} sq ft`,`${a.toFixed(0)} sq ft installed at ${money2(lr2.unit==="sy"?lr2.rate/9:lr2.rate)}/sq ft${LKNAME[lk]?", "+LKNAME[lk]:""}`,0,l);
       if(p.cat==="wood"&&corkOn()){need.cork+=a;need.glue+=a;add(`Install cork underlayment: ${a.toFixed(0)} sq ft`,`Glued down at ${money2(RATES.corkGlue)}/sq ft. Quiets footsteps for the floor below`,0,a*RATES.corkGlue)}
+      if(p.cat==="carpet")need.pad+=buy;
       if(p.cat==="laminate"&&p.pad!==1)need.lam+=a;
       if((p.cat==="lvp"||(p.cat==="laminate"&&p.pad===1))&&S.sub!=="wood")need.poly+=a;
       if(p.cat==="wood"&&/glue|cork|herring|chevron/.test(lk))need.glue+=a;}
@@ -763,7 +777,8 @@ function calc(){
     if(r.doors>0&&p.cat!=="refinish"){const tp=accBrand().trans[p.cat];add(`Transition pieces: ${r.name}, ${r.doors} (different floor or sliding door)`,tp?`${tp.name} at ${money2(tp.price)} each (we match your floor), installed at ${money(RATES.transition)} each`:`Metal transition strip installed at ${money(RATES.transition)} each`,tp?r.doors*tp.price:0,r.doors*RATES.transition)}
     if(p.cat!=="carpet"&&p.cat!=="refinish") hardPerim+=roomPerim(r);
   });
-  {const B=accBrand();if(need.cork||need.lam||need.poly||need.glue)lines.push({label:"Install materials (recommended, "+B.label+")",head:true});
+  {const B=accBrand();if(need.cork||need.lam||need.poly||need.glue||need.pad)lines.push({label:(need.cork||need.lam||need.poly||need.glue)?"Install materials (recommended, "+B.label+")":"Install materials",head:true});
+   if(need.pad){const pd=padSel();add(`Carpet pad: ${need.pad} sq ft`,`${pd.name} at ${money2(pd.price)}/sq ft. Same square feet as your carpet; installed with the carpet`,need.pad*pd.price,0)}
    if(need.cork){const ck=CORK[S.cork],n=Math.ceil(need.cork*1.05/ck.roll);add(`Cork underlayment: ${n} roll${n>1?"s":""}`,`${ck.name}, ${ck.roll} sq ft per roll, at ${money2(ck.price)}. For ${need.cork.toFixed(0)} sq ft`,n*ck.price,0)}
    if(need.lam){const u=B.lam,n=Math.ceil(need.lam*1.05/u.sf);add(`Foam underlayment: ${n} roll${n>1?"s":""}`,`${u.name}, ${u.sf} sq ft per roll, at ${money2(u.price)}. Recommended for laminate: quieter, softer underfoot, built-in moisture barrier`,n*u.price,0)}
    if(need.poly){const pr=polyRolls(Math.ceil(need.poly*1.1));add(`Moisture barrier poly film: ${need.poly.toFixed(0)} sq ft`,`Recommended under floating floors over concrete to block slab moisture. ${pr.txt}`,pr.cost,0)}
@@ -807,7 +822,7 @@ function renderHow(){const cats=[...new Set(S.rooms.filter(r=>roomArea(r)>0).map
 const r50=n=>Math.round(n/50)*50;
 function extrasUI(){
   $("trim").value=S.trim;$("furn").value=S.furn;$("steps").value=S.steps||0;$("toilets").value=S.toilets;
-  $("sub").value=S.sub||"concrete";{const w=S.sub==="wood"&&S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="wood");$("corkRow").hidden=!w;$("cork").value=S.cork||"no";$("accRow").hidden=!S.rooms.some(r=>roomArea(r)>0&&/lvp|laminate|wood/.test(P(r.floor).cat));$("acc").value=S.acc||"mohawk"}$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
+  $("sub").value=S.sub||"concrete";{const w=S.sub==="wood"&&S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="wood");$("corkRow").hidden=!w;$("cork").value=S.cork||"no";$("accRow").hidden=!S.rooms.some(r=>roomArea(r)>0&&/lvp|laminate|wood/.test(P(r.floor).cat));$("acc").value=S.acc||"mohawk";$("padRow").hidden=!S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="carpet");$("pad").value=padSel().id}$("doorTrim").value=S.doorTrim||0;$("appliances").value=S.appliances||0;
   {const cats=new Set(S.rooms.filter(r=>roomArea(r)>0).map(r=>P(r.floor).cat));
    ["doorTrim","toilets","appliances"].forEach(k=>{const y=(+S[k]||0)>0;$("yn_"+k).value=y?"yes":"no";$("row_"+k).hidden=!y});
    {const pr=S.prep||"ok";$("prepYN").value=pr==="ok"?"no":pr==="unsure"?"unsure":"yes";$("prepRow").hidden=!(pr==="fix"||pr==="level");if(pr==="fix"||pr==="level")$("prep").value=pr}
@@ -863,6 +878,7 @@ $("sampleBtn").onclick=()=>{
     .then(()=>{$("sampleMsg").innerHTML="<b>✓ Sent!</b> Pay $25 by Zelle below and we'll mail your samples."},()=>{});
 };
 $("sampleCopy").onclick=()=>{const t=$("sampleSummary").value;if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Request copied"),()=>{$("sampleSummary").select()});else $("sampleSummary").select()};
+$("pad").innerHTML=["Mohawk","Shaw"].map(b=>`<optgroup label="${b}">`+PADS.filter(x=>x.brand===b).map(x=>`<option value="${x.id}">${x.name.replace(/^(Mohawk|Shaw TotalWorx) /,"")}, ${money2(x.price)}/sq ft${x.rec?" (recommended)":""}</option>`).join("")+"</optgroup>").join("");$("pad").addEventListener("change",()=>{S.cpad=$("pad").value;save();track("pad",S.cpad);renderQuote();flashTotal()});
 $("sub").addEventListener("change",()=>extrasUI());$("acc").addEventListener("change",()=>{S.acc=$("acc").value;save();track("acc",S.acc);renderQuote();flashTotal()});$("cork").addEventListener("change",()=>{S.cork=$("cork").value;save();track("cork",S.cork);renderQuote();flashTotal()});
 ["trim","prep","furn","hasStairs","steps","toilets","sub","doorTrim","appliances"].forEach(id=>$(id).addEventListener("input",()=>{S[id]=$(id).type==="number"?(+$(id).value||0):$(id).value;save();renderQuote();flashTotal()}));
 // ---------- ONLINE DATABASE (Supabase). Empty = off, app falls back to copy/text. ----------
@@ -951,7 +967,7 @@ $("sendBtn").onclick=()=>{
   if(!$("refPanel").hidden&&$("stains").value==="yes"&&!refPhotos.length){toast("Please add a photo of each stain first");$("refPanel").scrollIntoView({behavior:"smooth"});return}
   const q=renderQuote();
   const rooms=S.rooms.filter(r=>roomArea(r)>0).map(r=>`- ${r.name}: ${ft(r.lf,r.li).toFixed(1)} x ${ft(r.wf,r.li2).toFixed(1)} ft (${roomArea(r).toFixed(0)} sf), ${P(r.floor).name} ${P(r.floor).color} [${P(r.floor).cat}], now ${REMOVAL[r.existing].label}, ${r.doors} doorways`).join("\n");
-  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, subfloor: ${S.sub||"concrete"}${corkOn()?", CORK UNDERLAYMENT "+(S.cork==="c6"?"6mm":"3mm")+" + adhesive":""}, materials brand: ${accBrand().label}, stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\n${privOn()?`Private pricing: YES (logged in as ${(getPriv().customer||{}).email||"-"}), job address: ${S.priv.addr}, payment: ${S.priv.pay}\n`:""}Instant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
+  $("summary").value=`New quote request (app)\nName: ${$("cName").value||"-"}\nPhone: ${$("cPhone").value||"-"}\n${contactText()}\nCity: ${$("cCity").value||"-"}\nBest time: ${$("cTime").value}\n\nRooms:\n${rooms}\nTrim: ${S.trim}, prep: ${S.prep||"ok"}, furniture: ${S.furn}, subfloor: ${S.sub||"concrete"}${corkOn()?", CORK UNDERLAYMENT "+(S.cork==="c6"?"6mm":"3mm")+" + adhesive":""}, materials brand: ${accBrand().label}, ${S.rooms.some(r=>roomArea(r)>0&&P(r.floor).cat==="carpet")?"carpet pad: "+padSel().name+", ":""}stairs: ${S.hasStairs==="yes"?(S.steps||0):0} steps (${stairKind()==="carpet"?"carpet":"box"}, photo to confirm), toilets: ${S.toilets}\n\n${privOn()?`Private pricing: YES (logged in as ${(getPriv().customer||{}).email||"-"}), job address: ${S.priv.addr}, payment: ${S.priv.pay}\n`:""}Instant quote: ${money(q.total)} (shipping not included) (range ${money(r50(q.total*0.95))}-${money(r50(q.total*1.10))})\nPhotos taken: ${photos.length}\nWalkthrough videos: ${videos.length}${S.rooms.some(r=>P(r.floor).cat==="refinish")?`\nRefinish: wood species ${$("species").value||"not sure (identify from photo)"}, board width ${$("plank").value||"not sure"}, stains: ${$("stains").value}, floor photos: ${refPhotos.length}`:""}\n\n${interests()}`;
   $("sent").hidden=false;
   if(FEED.url&&!dbOn()){sendToOffice(q);return}
   $("summary").scrollIntoView({behavior:"smooth",block:"center"});
