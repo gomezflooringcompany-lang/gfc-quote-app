@@ -770,9 +770,9 @@ function laborKey(p){const pat=p.pattern||"standard";
 // Large-format tile: 24x48 and bigger (needs two installers, leveling clips, a flatter floor).
 function isLargeTile(p){const m=/(\d+(?:\.\d+)?)\s*["']?\s*[xX×]\s*(\d+(?:\.\d+)?)/.exec((p.name||"")+" "+(p.color||""));if(!m)return false;const a=+m[1],b=+m[2];return Math.min(a,b)>=24&&Math.max(a,b)>=48}
 const LKNAME={engineered_wood_cork:"glued down on cork underlayment",tile_large:"large-format tile (24x48 and up)",herringbone:"herringbone pattern",herringbone_laminate:"herringbone pattern",herringbone_wood:"herringbone pattern",chevron_wood:"chevron pattern",engineered_wood_glue:"glued down",engineered_wood:"nailed or floating over wood subfloor"};
-// Self-leveling (Shaw PrepWorx, 2026 TotalWorx guide cost x1.5): VL201 50 lb bag $40.50 covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
+// Self-leveling (Shaw PrepWorx, 2026 TotalWorx guide cost x1.5): VL201 50 lb bag $40.49 (store) covers ~50 sq ft at 1/8 in, ~25 at 1/4 in.
 // 9050 primer 4 gal pail $91.49 (store) at 300-350 sq ft/gal (plan 1,200 sq ft per pail). Labor per sq ft leveled.
-const LEVEL={bag:40.50,primer:91.49,primerSf:1200,labor:2.00};
+const LEVEL={bag:40.49,primer:91.49,primerSf:1200,labor:2.00};
 function levelCost(a,deep){const bags=Math.ceil(a/(deep?25:50)),pr=Math.ceil(a/LEVEL.primerSf);return {bags,pr,mat:bags*LEVEL.bag+pr*LEVEL.primer,lab:a*LEVEL.labor}}
 function calc(o){o=o||{};
   const lines=[];let mat=0,lab=0;
